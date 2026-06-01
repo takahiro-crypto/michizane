@@ -1,0 +1,14 @@
+{
+  "name": "michizane",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "道真 AX診断（事業部別）— Phase 1: ダミーCSVで動く最小構成",
+  "scripts": {
+    "start": "node src/cli.mjs",
+    "dev": "node src/server.mjs",
+    "build": "node scripts/build-static.mjs",
+    "test": "node --test tests/score.test.mjs"
+  }
+}
+

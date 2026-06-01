@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>道真 AX診断（事業部別）｜事業計画 × 事業部ログ</title>
+<style>
+  :root{
+    --navy:#1E2761; --navy2:#2A3570; --gold:#E6A817;
+    --green:#00857A; --green-soft:#E6F5F3; --green-ink:#0F2A28;
+    --red:#C84B31; --red-soft:#FBEDE8;
+    --magenta:#C2185B; --blue:#2E5E8C;
+    --paper:#F7F5EF; --card:#FFFFFF; --ink:#23262F; --muted:#71757F;
+    --line:#E5E0D6; --line2:#EFEBE2;
+    --serif:"Hiragino Mincho ProN","Yu Mincho","YuMincho",serif;
+    --sans:"Hiragino Kaku Gothic ProN","Yu Gothic","Meiryo",sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--paper);color:var(--ink);font-family:var(--sans);
+    -webkit-font-smoothing:antialiased;padding:30px 26px 24px;min-height:100vh;
+    background-image:radial-gradient(1100px 560px at 88% -10%, rgba(0,133,122,.06), transparent 60%),
+      radial-gradient(800px 460px at -5% 110%, rgba(30,39,97,.05), transparent 55%)}
+  .wrap{max-width:1180px;margin:0 auto}
+  .num{font-variant-numeric:tabular-nums;font-feature-settings:"tnum"}
+
+  header{display:flex;align-items:flex-end;justify-content:space-between;
+    padding-bottom:14px;border-bottom:2px solid var(--navy);margin-bottom:18px}
+  .brand{display:flex;align-items:baseline;gap:15px}
+  .mark{font-family:var(--serif);font-size:36px;font-weight:600;color:var(--navy);letter-spacing:.04em;line-height:1}
+  .mark .dot{color:var(--green)}
+  .sub .t1{font-size:12.5px;font-weight:700;color:var(--navy);letter-spacing:.08em}
+  .sub .t2{font-size:11px;color:var(--muted);margin-top:3px}
+  .tagright{font-size:10px;color:var(--muted);text-align:right;letter-spacing:.05em}
+
+  .busel{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px}
+  .bu{background:var(--card);border:1.5px solid var(--line);border-radius:12px;padding:13px 15px;cursor:pointer;transition:.18s;position:relative}
+  .bu:hover{border-color:var(--navy)}
+  .bu.on{border-color:var(--navy);box-shadow:0 8px 22px -12px rgba(30,39,97,.5)}
+  .bu .role{font-size:9.5px;font-weight:800;letter-spacing:.06em;padding:2px 9px;border-radius:999px;display:inline-block;margin-bottom:7px}
+  .bu.priority .role{background:var(--green-soft);color:var(--green)}
+  .bu.nonpriority .role{background:#EDEDEA;color:var(--muted)}
+  .bu .bn{font-size:14.5px;font-weight:800;color:var(--ink)}
+  .bu .bd{font-size:10.5px;color:var(--muted);margin-top:3px}
+  .bu.on.priority{background:linear-gradient(180deg,#fff,#F2FAF8)}
+  .bu.on .check{position:absolute;top:11px;right:13px;width:18px;height:18px;border-radius:50%;background:var(--navy);color:#fff;font-size:11px;display:grid;place-items:center}
+  .bu .check{display:none}
+
+  .profile{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}
+  .pbox{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+  .pbox .ph{font-size:11px;font-weight:800;letter-spacing:.05em;margin-bottom:9px;display:flex;align-items:center;gap:7px}
+  .pbox.plan .ph{color:var(--navy)} .pbox.logs .ph{color:var(--green)}
+  .pbox .ph .tag{font-size:8.5px;font-weight:800;padding:1px 7px;border-radius:999px}
+  .pbox.plan .ph .tag{background:#E8EAF2;color:var(--navy)}
+  .pbox.logs .ph .tag{background:var(--green-soft);color:var(--green)}
+  .prow{display:flex;justify-content:space-between;font-size:11.5px;padding:4px 0;border-bottom:1px dashed var(--line2)}
+  .prow:last-child{border-bottom:none}
+  .prow .k{color:var(--muted)} .prow .v{font-weight:700;color:var(--ink)}
+  .logbar{display:flex;align-items:center;gap:8px;padding:5px 0}
+  .logbar .lk{font-size:11px;color:var(--ink);font-weight:600;width:160px;flex-shrink:0}
+  .logbar .lt{flex:1;height:8px;border-radius:4px;background:var(--line2);overflow:hidden}
+  .logbar .lf{height:100%;background:var(--green);border-radius:4px;transition:width .7s cubic-bezier(.22,.9,.3,1)}
+  .logbar .lv{font-size:9.5px;font-weight:800;color:var(--green);width:30px;text-align:right}
+
+  .stance{border-radius:12px;padding:13px 18px;margin-bottom:16px;display:flex;align-items:center;gap:14px;color:#fff}
+  .stance.attack{background:linear-gradient(100deg,var(--green),#00665E)}
+  .stance.defend{background:linear-gradient(100deg,var(--navy),var(--navy2))}
+  .stance .si{font-family:var(--serif);font-size:15px;font-weight:700;white-space:nowrap;padding-right:14px;border-right:1px solid rgba(255,255,255,.25)}
+  .stance .st{font-size:12px;line-height:1.55}
+  .stance .st b{color:var(--gold)}
+
+  .hero{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 20px;margin-bottom:14px;display:flex;align-items:center;gap:26px;box-shadow:0 10px 30px -22px rgba(0,0,0,.4)}
+  .hero .hk{font-size:11px;color:var(--muted);letter-spacing:.05em}
+  .hero .hbig{font-size:38px;font-weight:800;color:var(--navy);line-height:1}
+  .hero .hbig .u{font-size:14px;color:var(--muted);font-weight:700;margin-left:5px}
+  .hero .hbd{font-size:11.5px;color:var(--ink);margin-top:3px}
+  .hero .hbd b{font-weight:800}
+  .hero .spk{flex:1}
+  .splitbar{display:flex;height:13px;border-radius:7px;overflow:hidden;background:var(--line2)}
+  .splitbar .s{transition:width .8s cubic-bezier(.22,.9,.3,1)}
+  .splitbar .sc{background:var(--green)}.splitbar .sr{background:var(--gold)}
+  .slegend{display:flex;gap:14px;margin-top:7px;font-size:10px;color:var(--muted)}
+  .slegend i{width:9px;height:9px;border-radius:2px;display:inline-block;margin-right:5px;vertical-align:middle}
+
+  .reslabel{font-size:12px;font-weight:800;color:var(--navy);margin:2px 2px 10px;display:flex;justify-content:space-between;align-items:baseline}
+  .reslabel span{font-size:10.5px;color:var(--muted);font-weight:600}
+  .cards{display:flex;flex-direction:column;gap:9px}
+  .icard{display:grid;grid-template-columns:38px 1fr auto;gap:13px;align-items:center;
+    background:var(--card);border:1px solid var(--line);border-radius:11px;padding:12px 15px;border-left-width:4px;animation:slidein .45s both}
+  .icard.rev{border-left-color:var(--magenta)}.icard.cost{border-left-color:var(--green)}.icard.avoid{border-left-color:var(--blue)}
+  .rank{font-family:var(--serif);font-size:24px;font-weight:700;color:var(--navy);text-align:center;line-height:1}
+  .rank small{display:block;font-family:var(--sans);font-size:7.5px;color:var(--muted);font-weight:700;letter-spacing:.1em;margin-top:2px}
+  .nm{font-size:13.5px;font-weight:800;color:var(--ink);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .lev{font-size:8.5px;font-weight:800;padding:2px 7px;border-radius:999px}
+  .lev.rev{background:#FBE3EE;color:var(--magenta)}.lev.cost{background:var(--green-soft);color:var(--green)}.lev.avoid{background:#E7EEF6;color:var(--blue)}
+  .rat{font-size:10px;color:var(--muted);margin-top:4px;line-height:1.5}.rat b{color:var(--ink);font-weight:700}
+  .why{font-size:9.5px;color:var(--green);font-weight:700;margin-top:4px}
+  .iright{text-align:right;min-width:104px}
+  .imp{font-size:19px;font-weight:800;color:var(--navy)}.impu{font-size:10px;color:var(--muted);font-weight:700}
+  .native{font-size:9px;color:var(--muted);margin-top:1px}
+  .ease{display:flex;gap:3px;justify-content:flex-end;margin-top:6px}
+  .ease .d{width:6px;height:6px;border-radius:50%;background:var(--line)}.ease .d.on{background:var(--gold)}
+  .ease .el{font-size:8px;color:var(--muted);margin-right:3px;align-self:center;font-weight:700}
+
+  .portfolio{margin-top:14px;background:#FFF8E6;border:1px solid var(--gold);border-radius:12px;padding:13px 18px;font-size:11.5px;color:#6e5212;line-height:1.6}
+  .portfolio b{color:#8A5F00;font-weight:800}
+  footer{margin-top:14px;font-size:10px;color:var(--muted);display:flex;justify-content:space-between}
+
+  .loading{padding:40px;text-align:center;color:var(--muted);font-size:13px}
+  .err{padding:20px;background:var(--red-soft);border:1px solid var(--red);border-radius:10px;color:var(--red);font-size:12px;margin:12px 0}
+  @keyframes slidein{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+  /* ===== mode tabs（攻め / 守り） ===== */
+  .modetabs{display:flex;gap:8px;margin-bottom:18px;border-bottom:1px solid var(--line);padding-bottom:0}
+  .mtab{appearance:none;border:none;background:none;cursor:pointer;font-family:var(--sans);
+    font-size:13.5px;font-weight:800;color:var(--muted);padding:11px 20px 13px;position:relative;
+    border-radius:9px 9px 0 0;transition:.16s;display:flex;align-items:center;gap:8px;letter-spacing:.03em}
+  .mtab .ic{width:9px;height:9px;border-radius:50%;background:currentColor;opacity:.55}
+  .mtab:hover{color:var(--ink)}
+  .mtab.on{color:#fff}
+  .mtab.on.attack{background:var(--green)}
+  .mtab.on.defend{background:var(--red)}
+  .mtab.on .ic{opacity:1;background:#fff}
+  .mtab .mt-sub{font-size:9.5px;font-weight:700;opacity:.8;letter-spacing:.04em}
+
+  /* ===== 守りビュー ===== */
+  .d-hero{background:linear-gradient(135deg,#fff 0%,var(--red-soft) 100%);
+    border:1px solid #f0d6cd;border-left:5px solid var(--red);border-radius:14px;
+    padding:20px 24px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;gap:18px;flex-wrap:wrap;
+    box-shadow:0 10px 30px -22px rgba(0,0,0,.4)}
+  .d-hero .hk{font-size:11.5px;color:var(--muted);font-weight:700;letter-spacing:.04em}
+  .d-hero .hbig{font-family:var(--serif);font-size:44px;font-weight:600;color:var(--navy);line-height:1.05}
+  .d-hero .hbig .u{font-size:17px;color:var(--red);margin-left:4px}
+  .d-hero .delta{font-size:12px;color:var(--red);font-weight:800;margin-top:3px}
+  .d-hero .right{text-align:right;font-size:11.5px;color:var(--muted);max-width:330px;line-height:1.6}
+  .d-hero .right .eq{font-family:var(--serif);font-size:14.5px;color:var(--navy);font-weight:700;margin-bottom:6px}
+  .d-hero .right b{color:var(--ink);font-weight:800}
+
+  .d-grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:14px}
+  .d-card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 17px;position:relative;overflow:hidden}
+  .d-card.c2{border-color:#f3c9dc}
+  .d-card .tag{font-size:10px;font-weight:800;letter-spacing:.05em;padding:3px 9px;border-radius:999px;display:inline-block}
+  .d-card.c1 .tag{background:var(--red-soft);color:var(--red)}
+  .d-card.c2 .tag{background:#FBE3EE;color:var(--magenta)}
+  .d-card.c3 .tag{background:#FFF8E6;color:#8A5F00}
+  .d-card h4{font-size:13px;color:var(--ink);margin-top:10px;font-weight:800}
+  .d-card .dnum{font-family:var(--serif);font-size:29px;font-weight:600;margin-top:7px;color:var(--navy);line-height:1.1}
+  .d-card.c2 .dnum{color:var(--magenta)}
+  .d-card .dnum .u{font-size:13px;color:var(--muted);margin-left:3px}
+  .d-card .calc{font-size:11px;color:var(--muted);margin-top:9px;border-top:1px dashed var(--line);padding-top:8px;line-height:1.5}
+  .d-card .calc b{color:var(--ink);font-weight:800}
+  .d-card .ribbon{position:absolute;top:13px;right:-31px;transform:rotate(38deg);background:var(--magenta);color:#fff;font-size:9px;font-weight:800;padding:3px 34px;letter-spacing:.06em}
+
+  .d-lower{display:grid;grid-template-columns:1.5fr 1fr;gap:12px;margin-bottom:14px}
+  .d-panel{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px 18px}
+  .d-panel h5{font-size:12.5px;font-weight:800;color:var(--navy);letter-spacing:.03em}
+  .d-panel .ph2{font-size:10.5px;color:var(--muted);margin:3px 0 13px}
+  .d-chart{display:flex;align-items:flex-end;gap:12px;height:150px;border-bottom:1px solid var(--line);padding-top:4px}
+  .d-col{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;gap:4px}
+  .d-vlabel{font-size:9.5px;color:var(--muted);font-weight:800}
+  .d-stack{width:56%;max-width:34px;display:flex;flex-direction:column;justify-content:flex-end;border-radius:4px 4px 0 0;overflow:hidden;transition:.5s}
+  .d-seg{width:100%;transition:.5s}
+  .d-seg.s-leak{background:var(--red)}.d-seg.s-fraud{background:var(--magenta)}.d-seg.s-early{background:var(--gold)}
+  .d-mlabel{font-size:10px;color:var(--muted)}
+  .d-col.on .d-mlabel{color:var(--navy);font-weight:800}
+  .d-legend{display:flex;gap:14px;margin-top:11px;flex-wrap:wrap}
+  .d-legend span{font-size:10.5px;color:var(--muted);display:flex;align-items:center;gap:5px}
+  .d-legend i{width:10px;height:10px;border-radius:3px;display:inline-block}
+  .d-ev{display:flex;justify-content:space-between;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--line)}
+  .d-ev:last-child{border-bottom:none}
+  .d-ev .el2{font-size:12px;color:var(--ink);line-height:1.45}
+  .d-ev .el2 small{display:block;color:var(--muted);font-size:10px;margin-top:2px}
+  .d-ev .ev2{font-family:var(--serif);font-size:15px;font-weight:600;color:var(--navy);white-space:nowrap;padding-left:10px}
+
+  .d-footing{display:flex;background:var(--navy);border-radius:12px;overflow:hidden}
+  .d-footing .f{flex:1;padding:13px 16px;color:#fff;border-right:1px solid rgba(255,255,255,.12)}
+  .d-footing .f:last-child{border-right:none}
+  .d-footing .fk{font-size:10px;color:#b9c0e0;letter-spacing:.05em}
+  .d-footing .fv{font-family:var(--serif);font-size:19px;font-weight:600;margin-top:2px}
+  .d-footing .fv .fu{font-size:11px;color:#cfd5ee;margin-left:2px}
+
+  @media(max-width:860px){
+    .d-grid3{grid-template-columns:1fr}
+    .d-lower{grid-template-columns:1fr}
+    .d-hero .hbig{font-size:36px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand">
+      <div class="mark">道真<span class="dot">.</span></div>
+      <div class="sub">
+        <div class="t1">AX 診断（事業部別）── PLAN × UNIT-LOGS</div>
+        <div class="t2">事業部の「計画」と「ログ実態」を掛け合わせ、役割に応じた最適なAXを提案する</div>
+      </div>
+    </div>
+    <div class="tagright" id="tagright">道真プロジェクト ／ 攻めの知性<br>Phase 2 ／ CSVデータ駆動</div>
+  </header>
+
+  <!-- ===== mode tabs ===== -->
+  <div class="modetabs">
+    <button class="mtab attack on" id="tab-attack" data-mode="attack">
+      <span class="ic"></span>攻めの知性<span class="mt-sub">AX診断（事業部別）</span>
+    </button>
+    <button class="mtab defend" id="tab-defend" data-mode="defend">
+      <span class="ic"></span>守りの知性<span class="mt-sub">防いだ損失額</span>
+    </button>
+  </div>
+
+  <!-- ===== 攻めビュー ===== -->
+  <div id="attack-view">
+  <div id="loading" class="loading">読み込み中…</div>
+  <div id="app" style="display:none">
+    <div class="busel" id="busel"></div>
+    <div class="profile">
+      <div class="pbox plan">
+        <div class="ph">事業計画 <span class="tag">この事業部に期待する役割</span></div>
+        <div id="plan-body"></div>
+      </div>
+      <div class="pbox logs">
+        <div class="ph">事業部ログ実態 <span class="tag">実際にどこが詰まっているか</span></div>
+        <div id="logs-body"></div>
+      </div>
+    </div>
+    <div class="stance" id="stance">
+      <div class="si" id="stance-i">―</div>
+      <div class="st" id="stance-t">―</div>
+    </div>
+    <div class="hero">
+      <div>
+        <div class="hk">想定 P/L インパクト（年間）</div>
+        <div class="hbig"><span class="num" id="h-total">0</span><span class="u">百万円/年</span></div>
+        <div class="hbd">コスト減 <span class="num" id="h-cost">0</span> ／ 売上増 <span class="num" id="h-rev">0</span></div>
+      </div>
+      <div class="spk">
+        <div class="splitbar"><div class="s sc" id="bar-cost" style="width:50%"></div><div class="s sr" id="bar-rev" style="width:50%"></div></div>
+        <div class="slegend"><span><i style="background:#00857A"></i>コスト減（外注削減・増員回避）</span><span><i style="background:#E6A817"></i>売上増</span></div>
+      </div>
+    </div>
+    <div class="reslabel">この事業部への推奨AXロードマップ <span id="res-count"></span></div>
+    <div class="cards" id="cards"></div>
+    <div class="portfolio" id="portfolio"></div>
+  </div>
+  </div><!-- /#attack-view -->
+
+  <!-- ===== 守りビュー ===== -->
+  <div id="defense-view" style="display:none">
+    <div id="d-loading" class="loading">読み込み中…</div>
+    <div id="d-app" style="display:none">
+
+      <div class="busel" id="d-monthsel"></div>
+
+      <div class="d-hero">
+        <div>
+          <div class="hk">当月 防いだ損失額（合計）</div>
+          <div class="hbig">¥<span class="num" id="d-total">0</span><span class="u">百万円</span></div>
+          <div class="delta" id="d-delta">―</div>
+        </div>
+        <div class="right">
+          <div class="eq">守りのAXが、攻めの投資を生む</div>
+          ここで守った損失は、増員回避・外注削減と同じく<br>そのまま再投資原資になる。攻めと守りは<b>同じ円</b>でつながる。
+        </div>
+      </div>
+
+      <div class="d-grid3">
+        <div class="d-card c1">
+          <span class="tag">① 漏洩の回避損</span>
+          <h4>情報漏洩インシデントの未然阻止</h4>
+          <div class="dnum">¥<span class="num" id="d-leak">0</span><span class="u">百万</span></div>
+          <div class="calc">漏洩想定単価 <b id="d-leak-unit">―</b> × 阻止件数 <b id="d-leak-cnt">―</b>件<br>UEBAで持出し兆候を発火前に遮断</div>
+        </div>
+        <div class="d-card c2">
+          <div class="ribbon">最重要</div>
+          <span class="tag">② 不正・横領の阻止額</span>
+          <h4>道真クロス検知で止めた実額</h4>
+          <div class="dnum">¥<span class="num" id="d-fraud">0</span><span class="u">百万</span></div>
+          <div class="calc">仕訳×Slackクロス検知で確証 <b id="d-fraud-cnt">―</b>件<br><b>実額で語れる</b>守りの中核数字</div>
+        </div>
+        <div class="d-card c3">
+          <span class="tag">③ 早期検知の圧縮額</span>
+          <h4>検知30時間がもたらす被害逓減</h4>
+          <div class="dnum">¥<span class="num" id="d-early">0</span><span class="u">百万</span></div>
+          <div class="calc">放置カーブ vs 検知30hの差分<br>同種インシデントの被害逓増を時間で押さえ込む</div>
+        </div>
+      </div>
+
+      <div class="d-lower">
+        <div class="d-panel">
+          <h5>防いだ損失額の推移（3区分の積み上げ）</h5>
+          <div class="ph2">縦軸：百万円／月。当月をハイライト。</div>
+          <div class="d-chart" id="d-chart"></div>
+          <div class="d-legend">
+            <span><i style="background:var(--red)"></i>漏洩の回避損</span>
+            <span><i style="background:var(--magenta)"></i>不正・横領の阻止額</span>
+            <span><i style="background:var(--gold)"></i>早期検知の圧縮額</span>
+          </div>
+        </div>
+        <div class="d-panel">
+          <h5>当月の主な阻止イベント</h5>
+          <div class="ph2">経営層が「金額」で把握すべき事象</div>
+          <div id="d-events"></div>
+        </div>
+      </div>
+
+      <div class="d-footing">
+        <div class="f"><div class="fk">国内UEBAシェア</div><div class="fv">34.5<span class="fu">%</span></div></div>
+        <div class="f"><div class="fk">監視対象</div><div class="fv">37<span class="fu">万人</span></div></div>
+        <div class="f"><div class="fk">解析ログ</div><div class="fv">5,605<span class="fu">億件</span></div></div>
+        <div class="f"><div class="fk">平均検知時間</div><div class="fv">30<span class="fu">時間</span></div></div>
+      </div>
+
+    </div>
+  </div><!-- /#defense-view -->
+
+  <footer>
+    <div id="foot-note">※ 攻めの出力は守り（内部統制）の証跡にもなる ── ひとつの知性、二つの働き</div>
+    <div>Confidential ／ Phase 2</div>
+  </footer>
+</div>
+
+<script type="module">
+import { score, summarize } from '/score.mjs';
+
+const LOGLABEL = {
+  salesAdmin:'営業の事務工数比率', csLoad:'CS応答の逼迫度', backoffice:'管理業務の外注費',
+  billing:'請求・債権の工数', itOps:'情シス運用負荷', hiring:'採用・立上げ工数',
+  attendance:'勤怠処理工数', reporting:'月次レポート工数'
+};
+const levName = { rev:'売上増', cost:'外注削減', avoid:'増員回避' };
+const focusLabel = { growth:'成長', cost:'コスト効率', labor:'人手不足対応' };
+
+let INITS = [], BUS = [], cur = null;
+const $ = id => document.getElementById(id);
+const f1 = v => v.toFixed(1);
+
+function countUp(el, t, fmt){
+  const from = parseFloat(el.dataset.cur || 0);
+  const s = performance.now(), d = 650;
+  function tk(n){
+    const k = Math.min((n - s) / d, 1);
+    const e = 1 - Math.pow(1 - k, 3);
+    const v = from + (t - from) * e;
+    el.textContent = fmt(v);
+    if(k < 1) requestAnimationFrame(tk);
+    else { el.dataset.cur = t; el.textContent = fmt(t); }
+  }
+  requestAnimationFrame(tk);
+}
+
+function render(){
+  const bu = BUS.find(b => b.id === cur);
+
+  $('busel').innerHTML = BUS.map(b => `
+    <div class="bu ${b.role} ${b.id === cur ? 'on' : ''}" data-id="${b.id}">
+      <span class="check">✓</span>
+      <span class="role">${b.roleLabel}</span>
+      <div class="bn">${b.name}</div><div class="bd">${b.desc}</div>
+    </div>`).join('');
+  document.querySelectorAll('.bu').forEach(el =>
+    el.addEventListener('click', () => { cur = el.dataset.id; render(); }));
+
+  $('plan-body').innerHTML = `
+    <div class="prow"><span class="k">役割</span><span class="v">${bu.roleLabel}</span></div>
+    <div class="prow"><span class="k">売上目標（来期）</span><span class="v">${bu.plan.growth > 0 ? '+' + bu.plan.growth + '%' : '据え置き'}</span></div>
+    <div class="prow"><span class="k">人員方針</span><span class="v">${bu.plan.head}</span></div>
+    <div class="prow"><span class="k">重点</span><span class="v">${focusLabel[bu.plan.focus] || bu.plan.focus}</span></div>`;
+
+  const lt = Object.entries(bu.logs).sort((a, b) => b[1] - a[1]).slice(0, 4);
+  $('logs-body').innerHTML = lt.map(([k, v]) => `
+    <div class="logbar"><span class="lk">${LOGLABEL[k] || k}</span>
+      <span class="lt"><span class="lf" style="width:${Math.round(v * 100)}%"></span></span>
+      <span class="lv">${v >= .7 ? '高' : v >= .4 ? '中' : '低'}</span></div>`).join('');
+
+  const attack = bu.role === 'priority';
+  $('stance').className = 'stance ' + (attack ? 'attack' : 'defend');
+  $('stance-i').textContent = attack ? '攻めのAX' : '守りのAX';
+  $('stance-t').innerHTML = attack
+    ? `成長ドライバーの事業部。ログが示す<b>律速（営業事務・CS・採用）を自動化で外し</b>、限られた人員のまま成長を最大化する。`
+    : `収益維持フェーズの事業部。<b>外注・定型業務を省人化してmarginを守り</b>、浮いた人員・予算を重点事業部へ再配置する原資をつくる。`;
+
+  const scored = score(bu, INITS);
+  const top = scored.slice(0, 5);
+  const sum = summarize(top);
+
+  countUp($('h-total'), sum.annualTotal, f1);
+  countUp($('h-cost'), sum.annualCost, f1);
+  countUp($('h-rev'), sum.annualRev, f1);
+
+  const tot = (sum.monthlyCost + sum.monthlyRev) || 1;
+  $('bar-cost').style.width = (sum.monthlyCost / tot * 100) + '%';
+  $('bar-rev').style.width = (sum.monthlyRev / tot * 100) + '%';
+  $('res-count').textContent = `計画 × ログを掛け合わせ、全${scored.length}施策から上位${top.length}件`;
+
+  $('cards').innerHTML = top.map((it, i) => {
+    const dots = [1, 2, 3, 4, 5].map(n => `<span class="d ${n <= it.ease ? 'on' : ''}"></span>`).join('');
+    return `<div class="icard ${it.lever}" style="animation-delay:${i * 0.05}s">
+      <div class="rank">${i + 1}<small>RANK</small></div>
+      <div>
+        <div class="nm">${it.name}<span class="lev ${it.lever}">${levName[it.lever]}</span></div>
+        <div class="rat">${it.rat || ''}</div>
+        <div class="why">▲ この事業部のログ「${LOGLABEL[it.log] || it.log}」が${it.ls >= .7 ? '高い' : it.ls >= .4 ? '中程度' : '低い'} → ${it.ls >= .7 ? '最優先で効く' : '寄与あり'}</div>
+      </div>
+      <div class="iright">
+        <div class="imp">¥<span class="num">${f1(it.impact)}</span><span class="impu">M/月</span></div>
+        <div class="native">${it.native || ''}</div>
+        <div class="ease"><span class="el">容易性</span>${dots}</div>
+      </div>
+    </div>`;
+  }).join('');
+
+  $('portfolio').innerHTML = attack
+    ? `<b>ポートフォリオ視点：</b>この重点事業部には<b>成長を加速するAX</b>を集中投下する。一方、非重点事業部で省人化して生んだ余力（人員・予算）を、ここへ再配置するのが事業部別AXの狙い。`
+    : `<b>ポートフォリオ視点：</b>この非重点事業部のAXの目的は単なるコスト削減ではない。<b>省人化で生んだ余力を、重点事業部（成長ドライバー）へ再配置する原資をつくる</b>こと。守りのAXが、攻めの投資を生む。`;
+}
+
+async function main(){
+  try {
+    const r = await fetch('/data.json');
+    if (!r.ok) throw new Error('API ' + r.status);
+    const data = await r.json();
+    INITS = data.inits;
+    BUS = data.bus;
+    if (BUS.length === 0) throw new Error('事業部データが空');
+    cur = BUS[0].id;
+    $('loading').style.display = 'none';
+    $('app').style.display = '';
+    render();
+  } catch (e) {
+    $('loading').innerHTML = `<div class="err">読み込みエラー: ${e.message}</div>`;
+  }
+}
+main();
+
+/* ===================== 守りの知性（防いだ損失額） ===================== */
+let DEF = null, dCur = null, dLoaded = false;
+
+async function loadDefense(){
+  if (dLoaded) return;
+  try {
+    const r = await fetch('/defense.json');
+    if (!r.ok) throw new Error('API ' + r.status);
+    const data = await r.json();
+    DEF = data.months;
+    if (!DEF || DEF.length === 0) throw new Error('守りデータが空');
+    dCur = DEF[DEF.length - 1].month; // 最新月を初期表示
+    dLoaded = true;
+    $('d-loading').style.display = 'none';
+    $('d-app').style.display = '';
+    dRender();
+  } catch (e) {
+    $('d-loading').innerHTML = `<div class="err">読み込みエラー: ${e.message}</div>`;
+  }
+}
+
+function dRender(){
+  const idx = DEF.findIndex(m => m.month === dCur);
+  const m = DEF[idx];
+  const total = m.leak + m.fraud + m.early;
+
+  // 月セレクタ（攻めの .bu UI を流用）
+  $('d-monthsel').innerHTML = DEF.map(x => `
+    <div class="bu ${x.month === dCur ? 'on' : ''}" data-month="${x.month}" style="text-align:center">
+      <span class="check">✓</span>
+      <div class="bn">${x.label}</div>
+      <div class="bd">防いだ損失 ¥${(x.leak + x.fraud + x.early).toLocaleString('ja-JP')}百万</div>
+    </div>`).join('');
+  document.querySelectorAll('#d-monthsel .bu').forEach(el =>
+    el.addEventListener('click', () => { dCur = el.dataset.month; dRender(); }));
+
+  // hero
+  countUp($('d-total'), total, v => Math.round(v).toLocaleString('ja-JP'));
+  if (idx > 0) {
+    const prev = DEF[idx-1].leak + DEF[idx-1].fraud + DEF[idx-1].early;
+    const diff = total - prev;
+    const pct = ((diff / prev) * 100).toFixed(1);
+    $('d-delta').textContent = `前月比 ${diff>=0?'+':''}${diff.toLocaleString('ja-JP')}百万円（${diff>=0?'+':''}${pct}%）`;
+  } else {
+    $('d-delta').textContent = '基準月';
+  }
+
+  // cards
+  countUp($('d-leak'), m.leak, v => Math.round(v).toLocaleString('ja-JP'));
+  countUp($('d-fraud'), m.fraud, v => Math.round(v).toLocaleString('ja-JP'));
+  countUp($('d-early'), m.early, v => Math.round(v).toLocaleString('ja-JP'));
+  $('d-leak-unit').textContent = m.leakUnit;
+  $('d-leak-cnt').textContent = m.leakCnt;
+  $('d-fraud-cnt').textContent = m.fraudCnt;
+
+  // chart
+  const maxT = Math.max(...DEF.map(x => x.leak + x.fraud + x.early));
+  $('d-chart').innerHTML = DEF.map((x, i) => {
+    const t = x.leak + x.fraud + x.early;
+    const h = (t / maxT) * 130;
+    return `<div class="d-col ${x.month===dCur?'on':''}">
+      <div class="d-vlabel">¥${t.toLocaleString('ja-JP')}</div>
+      <div class="d-stack" style="height:${h}px;opacity:${x.month===dCur?1:.5}">
+        <div class="d-seg s-early" style="height:${(x.early/t)*100}%"></div>
+        <div class="d-seg s-fraud" style="height:${(x.fraud/t)*100}%"></div>
+        <div class="d-seg s-leak" style="height:${(x.leak/t)*100}%"></div>
+      </div>
+      <div class="d-mlabel">${x.label.replace('2026年','')}</div>
+    </div>`;
+  }).join('');
+
+  // events
+  $('d-events').innerHTML = m.events.map(e =>
+    `<div class="d-ev"><div class="el2">${e.title}<small>${e.sub}</small></div><div class="ev2">${e.value}</div></div>`
+  ).join('');
+}
+
+/* ===================== タブ切替 ===================== */
+function setMode(mode){
+  const attack = mode === 'attack';
+  $('tab-attack').classList.toggle('on', attack);
+  $('tab-defend').classList.toggle('on', !attack);
+  $('attack-view').style.display = attack ? '' : 'none';
+  $('defense-view').style.display = attack ? 'none' : '';
+  $('tagright').innerHTML = attack
+    ? '道真プロジェクト ／ 攻めの知性<br>Phase 2 ／ CSVデータ駆動'
+    : '道真プロジェクト ／ 守りの知性<br>Phase 2 ／ 防いだ損失額';
+  $('foot-note').textContent = attack
+    ? '※ 攻めの出力は守り（内部統制）の証跡にもなる ── ひとつの知性、二つの働き'
+    : '※ 守りで防いだ損失は、攻めの再投資原資になる ── ひとつの知性、二つの働き';
+  if (!attack) loadDefense();
+  if (history.replaceState) history.replaceState(null, '', attack ? '#attack' : '#defend');
+}
+$('tab-attack').addEventListener('click', () => setMode('attack'));
+$('tab-defend').addEventListener('click', () => setMode('defend'));
+if (location.hash === '#defend') setMode('defend');
+</script>
+</body>
+</html>
+

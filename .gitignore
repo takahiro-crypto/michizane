@@ -1,0 +1,15 @@
+node_modules/
+.vercel/
+.env
+.env.local
+.DS_Store
+# ビルド成果物（Vercel 側でビルドするのでコミット不要）
+public/data.json
+public/score.mjs
+public/defense.json
+
+.vercel
+
+# 引き渡し用の配布コンテナ（中身は展開済み）
+files.zip
+

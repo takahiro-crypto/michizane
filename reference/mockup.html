@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>道真 AX診断（事業部別）｜事業計画 × 事業部ログ</title>
+<style>
+  :root{
+    --navy:#1E2761; --navy2:#2A3570; --gold:#E6A817;
+    --green:#00857A; --green-soft:#E6F5F3; --green-ink:#0F2A28;
+    --red:#C84B31; --red-soft:#FBEDE8;
+    --magenta:#C2185B; --blue:#2E5E8C;
+    --paper:#F7F5EF; --card:#FFFFFF; --ink:#23262F; --muted:#71757F;
+    --line:#E5E0D6; --line2:#EFEBE2;
+    --serif:"Hiragino Mincho ProN","Yu Mincho","YuMincho",serif;
+    --sans:"Hiragino Kaku Gothic ProN","Yu Gothic","Meiryo",sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--paper);color:var(--ink);font-family:var(--sans);
+    -webkit-font-smoothing:antialiased;padding:30px 26px 24px;min-height:100vh;
+    background-image:radial-gradient(1100px 560px at 88% -10%, rgba(0,133,122,.06), transparent 60%),
+      radial-gradient(800px 460px at -5% 110%, rgba(30,39,97,.05), transparent 55%)}
+  .wrap{max-width:1180px;margin:0 auto}
+  .num{font-variant-numeric:tabular-nums;font-feature-settings:"tnum"}
+
+  header{display:flex;align-items:flex-end;justify-content:space-between;
+    padding-bottom:14px;border-bottom:2px solid var(--navy);margin-bottom:18px}
+  .brand{display:flex;align-items:baseline;gap:15px}
+  .mark{font-family:var(--serif);font-size:36px;font-weight:600;color:var(--navy);letter-spacing:.04em;line-height:1}
+  .mark .dot{color:var(--green)}
+  .sub .t1{font-size:12.5px;font-weight:700;color:var(--navy);letter-spacing:.08em}
+  .sub .t2{font-size:11px;color:var(--muted);margin-top:3px}
+  .tagright{font-size:10px;color:var(--muted);text-align:right;letter-spacing:.05em}
+
+  /* BU selector */
+  .busel{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px}
+  .bu{background:var(--card);border:1.5px solid var(--line);border-radius:12px;padding:13px 15px;cursor:pointer;transition:.18s;position:relative}
+  .bu:hover{border-color:var(--navy)}
+  .bu.on{border-color:var(--navy);box-shadow:0 8px 22px -12px rgba(30,39,97,.5)}
+  .bu .role{font-size:9.5px;font-weight:800;letter-spacing:.06em;padding:2px 9px;border-radius:999px;display:inline-block;margin-bottom:7px}
+  .bu.priority .role{background:var(--green-soft);color:var(--green)}
+  .bu.nonpriority .role{background:#EDEDEA;color:var(--muted)}
+  .bu .bn{font-size:14.5px;font-weight:800;color:var(--ink)}
+  .bu .bd{font-size:10.5px;color:var(--muted);margin-top:3px}
+  .bu.on.priority{background:linear-gradient(180deg,#fff,#F2FAF8)}
+  .bu.on .check{position:absolute;top:11px;right:13px;width:18px;height:18px;border-radius:50%;background:var(--navy);color:#fff;font-size:11px;display:grid;place-items:center}
+  .bu .check{display:none}
+
+  /* profile: plan x logs */
+  .profile{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}
+  .pbox{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+  .pbox .ph{font-size:11px;font-weight:800;letter-spacing:.05em;margin-bottom:9px;display:flex;align-items:center;gap:7px}
+  .pbox.plan .ph{color:var(--navy)} .pbox.logs .ph{color:var(--green)}
+  .pbox .ph .tag{font-size:8.5px;font-weight:800;padding:1px 7px;border-radius:999px}
+  .pbox.plan .ph .tag{background:#E8EAF2;color:var(--navy)}
+  .pbox.logs .ph .tag{background:var(--green-soft);color:var(--green)}
+  .prow{display:flex;justify-content:space-between;font-size:11.5px;padding:4px 0;border-bottom:1px dashed var(--line2)}
+  .prow:last-child{border-bottom:none}
+  .prow .k{color:var(--muted)} .prow .v{font-weight:700;color:var(--ink)}
+  .logbar{display:flex;align-items:center;gap:8px;padding:5px 0}
+  .logbar .lk{font-size:11px;color:var(--ink);font-weight:600;width:160px;flex-shrink:0}
+  .logbar .lt{flex:1;height:8px;border-radius:4px;background:var(--line2);overflow:hidden}
+  .logbar .lf{height:100%;background:var(--green);border-radius:4px;transition:width .7s cubic-bezier(.22,.9,.3,1)}
+  .logbar .lv{font-size:9.5px;font-weight:800;color:var(--green);width:30px;text-align:right}
+
+  /* stance banner */
+  .stance{border-radius:12px;padding:13px 18px;margin-bottom:16px;display:flex;align-items:center;gap:14px;color:#fff}
+  .stance.attack{background:linear-gradient(100deg,var(--green),#00665E)}
+  .stance.defend{background:linear-gradient(100deg,var(--navy),var(--navy2))}
+  .stance .si{font-family:var(--serif);font-size:15px;font-weight:700;white-space:nowrap;padding-right:14px;border-right:1px solid rgba(255,255,255,.25)}
+  .stance .st{font-size:12px;line-height:1.55}
+  .stance .st b{color:var(--gold)}
+
+  /* hero */
+  .hero{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 20px;margin-bottom:14px;display:flex;align-items:center;gap:26px;box-shadow:0 10px 30px -22px rgba(0,0,0,.4)}
+  .hero .hk{font-size:11px;color:var(--muted);letter-spacing:.05em}
+  .hero .hbig{font-size:38px;font-weight:800;color:var(--navy);line-height:1}
+  .hero .hbig .u{font-size:14px;color:var(--muted);font-weight:700;margin-left:5px}
+  .hero .hbd{font-size:11.5px;color:var(--ink);margin-top:3px}
+  .hero .hbd b{font-weight:800}
+  .hero .spk{flex:1}
+  .splitbar{display:flex;height:13px;border-radius:7px;overflow:hidden;background:var(--line2)}
+  .splitbar .s{transition:width .8s cubic-bezier(.22,.9,.3,1)}
+  .splitbar .sc{background:var(--green)}.splitbar .sr{background:var(--gold)}
+  .slegend{display:flex;gap:14px;margin-top:7px;font-size:10px;color:var(--muted)}
+  .slegend i{width:9px;height:9px;border-radius:2px;display:inline-block;margin-right:5px;vertical-align:middle}
+
+  .reslabel{font-size:12px;font-weight:800;color:var(--navy);margin:2px 2px 10px;display:flex;justify-content:space-between;align-items:baseline}
+  .reslabel span{font-size:10.5px;color:var(--muted);font-weight:600}
+  .cards{display:flex;flex-direction:column;gap:9px}
+  .icard{display:grid;grid-template-columns:38px 1fr auto;gap:13px;align-items:center;
+    background:var(--card);border:1px solid var(--line);border-radius:11px;padding:12px 15px;border-left-width:4px;animation:slidein .45s both}
+  .icard.rev{border-left-color:var(--magenta)}.icard.cost{border-left-color:var(--green)}.icard.avoid{border-left-color:var(--blue)}
+  .rank{font-family:var(--serif);font-size:24px;font-weight:700;color:var(--navy);text-align:center;line-height:1}
+  .rank small{display:block;font-family:var(--sans);font-size:7.5px;color:var(--muted);font-weight:700;letter-spacing:.1em;margin-top:2px}
+  .nm{font-size:13.5px;font-weight:800;color:var(--ink);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .lev{font-size:8.5px;font-weight:800;padding:2px 7px;border-radius:999px}
+  .lev.rev{background:#FBE3EE;color:var(--magenta)}.lev.cost{background:var(--green-soft);color:var(--green)}.lev.avoid{background:#E7EEF6;color:var(--blue)}
+  .rat{font-size:10px;color:var(--muted);margin-top:4px;line-height:1.5}.rat b{color:var(--ink);font-weight:700}
+  .why{font-size:9.5px;color:var(--green);font-weight:700;margin-top:4px}
+  .iright{text-align:right;min-width:104px}
+  .imp{font-size:19px;font-weight:800;color:var(--navy)}.impu{font-size:10px;color:var(--muted);font-weight:700}
+  .native{font-size:9px;color:var(--muted);margin-top:1px}
+  .ease{display:flex;gap:3px;justify-content:flex-end;margin-top:6px}
+  .ease .d{width:6px;height:6px;border-radius:50%;background:var(--line)}.ease .d.on{background:var(--gold)}
+  .ease .el{font-size:8px;color:var(--muted);margin-right:3px;align-self:center;font-weight:700}
+
+  .portfolio{margin-top:14px;background:#FFF8E6;border:1px solid var(--gold);border-radius:12px;padding:13px 18px;font-size:11.5px;color:#6e5212;line-height:1.6}
+  .portfolio b{color:#8A5F00;font-weight:800}
+  footer{margin-top:14px;font-size:10px;color:var(--muted);display:flex;justify-content:space-between}
+  @keyframes slidein{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand">
+      <div class="mark">道真<span class="dot">.</span></div>
+      <div class="sub">
+        <div class="t1">AX 診断（事業部別）── PLAN × UNIT-LOGS</div>
+        <div class="t2">事業部の「計画」と「ログ実態」を掛け合わせ、役割に応じた最適なAXを提案する</div>
+      </div>
+    </div>
+    <div class="tagright">道真プロジェクト ／ 攻めの知性<br>ダミーデータによるモックアップ</div>
+  </header>
+
+  <!-- BU selector -->
+  <div class="busel" id="busel"></div>
+
+  <!-- plan x logs -->
+  <div class="profile">
+    <div class="pbox plan">
+      <div class="ph">事業計画 <span class="tag">この事業部に期待する役割</span></div>
+      <div id="plan-body"></div>
+    </div>
+    <div class="pbox logs">
+      <div class="ph">事業部ログ実態 <span class="tag">実際にどこが詰まっているか</span></div>
+      <div id="logs-body"></div>
+    </div>
+  </div>
+
+  <!-- stance -->
+  <div class="stance" id="stance">
+    <div class="si" id="stance-i">―</div>
+    <div class="st" id="stance-t">―</div>
+  </div>
+
+  <!-- hero -->
+  <div class="hero">
+    <div>
+      <div class="hk">想定 P/L インパクト（年間）</div>
+      <div class="hbig"><span class="num" id="h-total">0</span><span class="u">百万円/年</span></div>
+      <div class="hbd">コスト減 <span class="num" id="h-cost">0</span> ／ 売上増 <span class="num" id="h-rev">0</span></div>
+    </div>
+    <div class="spk">
+      <div class="splitbar"><div class="s sc" id="bar-cost" style="width:50%"></div><div class="s sr" id="bar-rev" style="width:50%"></div></div>
+      <div class="slegend"><span><i style="background:#00857A"></i>コスト減（外注削減・増員回避）</span><span><i style="background:#E6A817"></i>売上増</span></div>
+    </div>
+  </div>
+
+  <div class="reslabel">この事業部への推奨AXロードマップ <span id="res-count"></span></div>
+  <div class="cards" id="cards"></div>
+
+  <div class="portfolio" id="portfolio"></div>
+
+  <footer>
+    <div>※ 攻めの出力は守り（内部統制）の証跡にもなる ── ひとつの知性、二つの働き</div>
+    <div>Confidential</div>
+  </footer>
+</div>
+
+<script>
+const INITS=[
+ {id:'sales',name:'営業事務の自動化',lever:'rev',baseRev:1.6,ease:3,log:'salesAdmin',serves:'売上成長',
+  rat:'提案書・見積・日程調整をCoworkが代行。営業が顧客接点に集中し<b>同じ人員で受注機会が増える</b>。',native:'アポ 2→3.6件/日'},
+ {id:'cs',name:'カスタマーサポート一次対応の自動化',lever:'rev',baseRev:1.1,ease:2,log:'csLoad',serves:'売上成長・人手不足',
+  rat:'一次対応をAIが処理。<b>解約抑制とLTV向上</b>、増員も抑える。',native:'応答時間 −60%'},
+ {id:'keiri',name:'経理・経費処理の自動化',lever:'cost',baseCost:1.2,ease:4,log:'backoffice',serves:'コスト削減',
+  rat:'OCR・規程チェック・仕訳生成を内製化。<b>外部委託費が実額で消える</b>。',native:'外注 ¥1.2M/月 解約'},
+ {id:'billing',name:'請求・債権管理の自動化',lever:'cost',baseCost:0.9,ease:3,log:'billing',serves:'コスト削減',
+  rat:'請求発行・消込・督促を自動化。委託費削減と<b>担当者の負荷軽減</b>。',native:'委託 ¥0.9M/月'},
+ {id:'kitting',name:'PCキッティング・情シス運用の自動化',lever:'cost',baseCost:0.7,ease:5,log:'itOps',serves:'コスト削減',
+  rat:'構成適用・台帳登録を自動化。<b>最も着手しやすく</b>外注費を即削減。',native:'外注 ¥0.7M/月'},
+ {id:'hire',name:'採用オペレーションの自動化',lever:'avoid',baseCost:1.1,ease:3,log:'hiring',serves:'人手不足・成長',
+  rat:'スクリーニング・日程調整を自動化。<b>採用ペースを上げつつ人事の増員は回避</b>。',native:'採用工数 −70%'},
+ {id:'overtime',name:'残業計算・勤怠処理の自動化',lever:'avoid',baseCost:0.5,ease:5,log:'attendance',serves:'コスト・人手不足',
+  rat:'勤怠集計・チェックを自動化。<b>着手容易</b>で処理能力を確保。',native:'1.0名分'},
+ {id:'report',name:'月次レポーティングの自動化',lever:'avoid',baseCost:0.8,ease:4,log:'reporting',serves:'全社最適',
+  rat:'集計・可視化を自動化。<b>意思決定の高速化</b>と管理工数削減。',native:'管理工数 1.4名分'},
+];
+
+const LOGLABEL={salesAdmin:'営業の事務工数比率',csLoad:'CS応答の逼迫度',backoffice:'管理業務の外注費',
+ billing:'請求・債権の工数',itOps:'情シス運用負荷',hiring:'採用・立上げ工数',attendance:'勤怠処理工数',reporting:'月次レポート工数'};
+
+const BUS=[
+ {id:'saas',name:'セキュリティSaaS事業部',role:'priority',roleLabel:'重点｜成長ドライバー',desc:'主力の成長エンジン',
+   plan:{growth:30,head:'増員可（成長投資）',focus:'growth',planLine:'売上 +30% / 積極投資'},
+   logs:{salesAdmin:.9,csLoad:.85,hiring:.7,billing:.35,backoffice:.25,itOps:.2,attendance:.25,reporting:.3}},
+ {id:'legacy',name:'受託・保守事業部',role:'nonpriority',roleLabel:'非重点｜収益維持',desc:'成熟・効率化フェーズ',
+   plan:{growth:0,head:'削減（省人化）',focus:'cost',planLine:'売上 据え置き / 利益重視'},
+   logs:{backoffice:.9,billing:.85,reporting:.7,attendance:.6,itOps:.55,salesAdmin:.2,csLoad:.25,hiring:.1}},
+ {id:'newbiz',name:'新規プロダクト事業部',role:'priority',roleLabel:'重点｜先行投資',desc:'立ち上げ・スケール前',
+   plan:{growth:30,head:'増員可（立上げ）',focus:'growth',planLine:'売上 +30% / 立ち上げ加速'},
+   logs:{hiring:.9,salesAdmin:.6,itOps:.6,reporting:.5,csLoad:.4,backoffice:.3,billing:.3,attendance:.3}},
+];
+
+let cur='saas';
+const $=id=>document.getElementById(id);
+const f1=v=>v.toFixed(1);
+function countUp(el,t,fmt){const from=parseFloat(el.dataset.cur||0),s=performance.now(),d=650;
+ function tk(n){const k=Math.min((n-s)/d,1),e=1-Math.pow(1-k,3),v=from+(t-from)*e;el.textContent=fmt(v);
+ if(k<1)requestAnimationFrame(tk);else{el.dataset.cur=t;el.textContent=fmt(t);}}requestAnimationFrame(tk);}
+
+function score(bu){
+ const g=bu.plan.growth/20, focus=bu.plan.focus;
+ return INITS.map(it=>{
+   const ls=bu.logs[it.log]||0;
+   let leverFit, impact, side;
+   if(it.lever==='rev'){leverFit=focus==='growth'?1.6:(g>=1?1.3:0.9); impact=it.baseRev*(0.6+g*0.4)*(0.7+ls*0.6); side='rev';}
+   else if(it.lever==='cost'){leverFit=focus==='cost'?1.6:1.0; impact=it.baseCost*(0.8+ls*0.6)*(focus==='cost'?1.15:1.0); side='cost';}
+   else{leverFit=focus==='labor'?1.5:(focus==='cost'?1.2:(focus==='growth'?1.1:1.0)); impact=it.baseCost*(0.8+ls*0.6)*(bu.plan.head.indexOf('削減')>=0?1.2:1.0); side='cost';}
+   const easeF=0.7+it.ease*0.08;
+   const sc=(0.5+ls)*leverFit*easeF;
+   return {...it,impact,side,ls,sc};
+ }).sort((a,b)=>b.sc-a.sc);
+}
+
+function render(){
+ const bu=BUS.find(b=>b.id===cur);
+ // selector
+ $('busel').innerHTML=BUS.map(b=>`<div class="bu ${b.role} ${b.id===cur?'on':''}" data-id="${b.id}">
+   <span class="check">✓</span>
+   <span class="role">${b.roleLabel}</span>
+   <div class="bn">${b.name}</div><div class="bd">${b.desc}</div></div>`).join('');
+ document.querySelectorAll('.bu').forEach(el=>el.addEventListener('click',()=>{cur=el.dataset.id;render();}));
+
+ // plan
+ $('plan-body').innerHTML=`
+   <div class="prow"><span class="k">役割</span><span class="v">${bu.roleLabel}</span></div>
+   <div class="prow"><span class="k">売上目標（来期）</span><span class="v">${bu.plan.growth>0?'+'+bu.plan.growth+'%':'据え置き'}</span></div>
+   <div class="prow"><span class="k">人員方針</span><span class="v">${bu.plan.head}</span></div>
+   <div class="prow"><span class="k">重点</span><span class="v">${({growth:'成長',cost:'コスト効率',labor:'人手不足対応'})[bu.plan.focus]}</span></div>`;
+
+ // logs (top 4 by value)
+ const lt=Object.entries(bu.logs).sort((a,b)=>b[1]-a[1]).slice(0,4);
+ $('logs-body').innerHTML=lt.map(([k,v])=>`<div class="logbar"><span class="lk">${LOGLABEL[k]}</span>
+   <span class="lt"><span class="lf" style="width:${Math.round(v*100)}%"></span></span>
+   <span class="lv">${v>=.7?'高':v>=.4?'中':'低'}</span></div>`).join('');
+
+ // stance
+ const attack=bu.role==='priority';
+ $('stance').className='stance '+(attack?'attack':'defend');
+ $('stance-i').textContent=attack?'攻めのAX':'守りのAX';
+ $('stance-t').innerHTML=attack
+   ? `成長ドライバーの事業部。ログが示す<b>律速（営業事務・CS・採用）を自動化で外し</b>、限られた人員のまま成長を最大化する。`
+   : `収益維持フェーズの事業部。<b>外注・定型業務を省人化してmarginを守り</b>、浮いた人員・予算を重点事業部へ再配置する原資をつくる。`;
+
+ // results
+ const scored=score(bu), top=scored.slice(0,5);
+ let cost=0,rev=0; top.forEach(it=>it.side==='rev'?rev+=it.impact:cost+=it.impact);
+ const totalM=(cost+rev)*12;
+ countUp($('h-total'),totalM,f1); countUp($('h-cost'),cost*12,f1); countUp($('h-rev'),rev*12,f1);
+ const tot=(cost+rev)||1;
+ $('bar-cost').style.width=(cost/tot*100)+'%'; $('bar-rev').style.width=(rev/tot*100)+'%';
+ $('res-count').textContent=`計画 × ログを掛け合わせ、全${scored.length}施策から上位${top.length}件`;
+
+ const levName={rev:'売上増',cost:'外注削減',avoid:'増員回避'};
+ $('cards').innerHTML=top.map((it,i)=>{
+   const dots=[1,2,3,4,5].map(n=>`<span class="d ${n<=it.ease?'on':''}"></span>`).join('');
+   return `<div class="icard ${it.lever}" style="animation-delay:${i*0.05}s">
+    <div class="rank">${i+1}<small>RANK</small></div>
+    <div><div class="nm">${it.name}<span class="lev ${it.lever}">${levName[it.lever]}</span></div>
+      <div class="rat">${it.rat}</div>
+      <div class="why">▲ この事業部のログ「${LOGLABEL[it.log]}」が${it.ls>=.7?'高い':it.ls>=.4?'中程度':'低い'} → ${it.ls>=.7?'最優先で効く':'寄与あり'}</div></div>
+    <div class="iright"><div class="imp">¥<span class="num">${f1(it.impact)}</span><span class="impu">M/月</span></div>
+      <div class="native">${it.native}</div>
+      <div class="ease"><span class="el">容易性</span>${dots}</div></div>
+   </div>`;
+ }).join('');
+
+ // portfolio note
+ $('portfolio').innerHTML = attack
+   ? `<b>ポートフォリオ視点：</b>この重点事業部には<b>成長を加速するAX</b>を集中投下する。一方、非重点事業部で省人化して生んだ余力（人員・予算）を、ここへ再配置するのが事業部別AXの狙い。`
+   : `<b>ポートフォリオ視点：</b>この非重点事業部のAXの目的は単なるコスト削減ではない。<b>省人化で生んだ余力を、重点事業部（成長ドライバー）へ再配置する原資をつくる</b>こと。守りのAXが、攻めの投資を生む。`;
+}
+render();
+</script>
+</body>
+</html>
+
