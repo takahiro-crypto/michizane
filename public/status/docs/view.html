@@ -1,0 +1,30 @@
+<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>資料ビューア</title>
+<style>
+body{max-width:900px;margin:0 auto;padding:30px 20px 60px;font-family:'Yu Gothic UI','Meiryo','Hiragino Sans',sans-serif;line-height:1.75;color:#1c2b4a}
+h1{font-size:23px;border-bottom:2px solid #2E5FB0;padding-bottom:8px;line-height:1.35}
+h2{font-size:18px;color:#2E5FB0;margin-top:28px;border-bottom:1px solid #d5dce8;padding-bottom:4px}
+h3{font-size:15px;margin-top:18px}
+table{border-collapse:collapse;width:100%;margin:10px 0;font-size:12.5px}
+th,td{border:1px solid #d5dce8;padding:6px 9px;text-align:left;vertical-align:top}
+th{background:#1c2b4a;color:#fff}
+code{background:#f0f3f7;padding:1px 5px;border-radius:4px;font-size:12.5px}
+pre{background:#f0f3f7;padding:12px;border-radius:8px;overflow-x:auto;font-size:12.5px;line-height:1.5}
+blockquote{border-left:4px solid #C8860A;background:#fef9ec;margin:10px 0;padding:8px 14px;color:#555}
+a{color:#2E5FB0} hr{border:none;border-top:1px solid #d5dce8;margin:18px 0}
+.back{display:inline-block;margin-bottom:16px;color:#6b7a99;text-decoration:none;font-size:13px}
+</style></head><body>
+<a class="back" href="/status/">← 進捗ダッシュボードへ戻る</a>
+<article id="c">読み込み中…</article>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script>
+function showErr(m){document.getElementById('c').innerHTML='<p style="color:#b03a6e;line-height:1.7">'+m+'</p>';}
+var f=new URLSearchParams(location.search).get('f')||'';
+if(!/^[a-zA-Z0-9._-]+\.md$/.test(f)){ showErr('資料が指定されていません（?f=ファイル名.md）。'); }
+else fetch('./'+f).then(function(r){ if(!r.ok) throw 0; return r.text(); }).then(function(md){
+  if(!window.marked){ showErr('資料ビューアの読み込みに失敗しました。通信環境をご確認のうえ、ページを再読み込みしてください。'); return; }
+  md = md.replace(/\[\[([^\]]+)\]\]/g,'$1');
+  document.getElementById('c').innerHTML = marked.parse(md);
+  var h=document.querySelector('#c h1'); if(h) document.title=h.textContent;
+}).catch(function(){ showErr('資料の読み込みに失敗しました。時間をおいて、ページを再読み込みしてください。'); });
+</script></body></html>
