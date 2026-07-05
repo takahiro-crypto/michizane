@@ -1,0 +1,134 @@
+<!doctype html><html lang="ja"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SaaSをTatsuyaに取り込んだ場合の効率化 試算 — 2026-04ログ実測</title>
+<style>
+:root{--ground:#F0F3F7;--surface:#fff;--text:#1C2B4A;--muted:#6B7A99;--accent:#C8860A;
+--warn:#D97706;--warn-bg:#FFF7ED;--primary:#3B6FD4;--primary-bg:#EEF4FF;--good:#0E9B8E;--border:#D5DCE8;
+--mono:'Courier New','Consolas',monospace}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--ground);color:var(--text);font-family:'Hiragino Sans','Noto Sans JP','Yu Gothic UI',system-ui,sans-serif;font-size:14px;line-height:1.7;padding:2rem 1.5rem}
+.container{max-width:1120px;margin:0 auto}
+.rpt-header{border-left:4px solid var(--primary);padding-left:1.25rem;margin-bottom:1.25rem}
+.ey{font-family:var(--mono);font-size:.7rem;letter-spacing:.1em;color:var(--muted);text-transform:uppercase}
+h1{font-size:1.55rem;font-weight:700;letter-spacing:-.02em;margin-top:.15rem}
+h2{font-size:1.05rem;font-weight:700;margin:1.75rem 0 .75rem;padding-bottom:.35rem;border-bottom:1px solid var(--border)}
+.sub{font-size:.8rem;color:var(--primary);font-weight:600;margin-top:.15rem;font-family:var(--mono)}
+.lead{background:var(--primary);color:#fff;border-radius:12px;padding:1.4rem 1.6rem;margin:1.25rem 0}
+.lead .big{font-size:2.4rem;font-weight:700;font-family:var(--mono);line-height:1.05}
+.lead .cap{font-size:.8rem;color:#cfe0ff;margin-top:.3rem}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:.9rem;margin:1rem 0}
+.card{background:var(--surface);border-radius:8px;padding:1rem 1.1rem;box-shadow:0 1px 3px rgba(28,43,74,.08);border:1px solid var(--border)}
+.cv{font-size:1.7rem;font-weight:700;color:var(--primary);font-family:var(--mono);line-height:1.1}
+.cv.g{color:var(--good)} .cv.w{color:var(--warn)}
+.cl{font-size:.74rem;color:var(--muted);margin-top:.3rem}
+.note{background:var(--warn-bg);border-left:5px solid var(--warn);border-radius:0 8px 8px 0;padding:.9rem 1.15rem;margin:1rem 0;font-size:.82rem;line-height:1.75}
+.note b{color:var(--warn)}
+table{border-collapse:collapse;width:100%;background:var(--surface);border-radius:8px;overflow:hidden;border:1px solid var(--border);box-shadow:0 1px 3px rgba(28,43,74,.08);font-size:.82rem;margin-bottom:.5rem}
+th{background:var(--text);color:#fff;padding:.5rem .7rem;text-align:right;font-size:.68rem;letter-spacing:.03em;white-space:nowrap}
+th.l{text-align:left}
+td{padding:.42rem .7rem;border-bottom:1px solid var(--border);text-align:right;font-family:var(--mono);white-space:nowrap}
+td.l{text-align:left;font-family:inherit}
+tr:last-child td{border-bottom:none}
+tbody tr:hover td{background:var(--primary-bg)}
+tr.saas td{background:#F1FAF8}
+tr.saas:hover td{background:#E3F4F1}
+.badge{display:inline-block;font-size:.58rem;font-weight:700;padding:.1rem .4rem;border-radius:3px;margin-left:.4rem;letter-spacing:.03em}
+.b-s{background:#D5F3EE;color:#0B6B60}
+ul{margin:.3rem 0 .3rem 1.2rem} li{margin:.25rem 0;font-size:.88rem}
+.phase{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:.9rem;margin-top:.6rem}
+.pcard{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:1rem 1.1rem}
+.pcard h3{font-size:.92rem;color:var(--primary);margin-bottom:.3rem}
+.foot{font-size:.72rem;color:var(--muted);margin-top:1.5rem;line-height:1.7;border-top:1px solid var(--border);padding-top:.8rem}
+</style></head><body><div class="container">
+<div class="rpt-header">
+<div class="ey">Efficiency Estimate · Lanscope操作ログ実測ベース</div>
+<h1>SaaSをTatsuyaに取り込んだ場合の効率化 試算</h1>
+<div class="sub">2026-04 / 対象301レポート（個人283） / ELTES</div>
+</div>
+
+<div class="lead">
+<div class="cap">社員が手作業でSaaS/社内システムのステータスを巡回確認している時間（＝Tatsuyaで自動化しうる部分）</div>
+<div class="big">約 995 時間 / 月</div>
+<div class="cap">≈ 6.2 人月（FTE） ／ 年 約 11,944 時間 ／ 金額換算 約 ¥35.8M/年（想定単価 ¥3,000/h）</div>
+</div>
+
+<div class="cards">
+<div class="card"><div class="cv g">6.2</div><div class="cl">FTE換算（SaaS巡回のみ・人月/月）</div></div>
+<div class="card"><div class="cv">212名</div><div class="cl">SaaS巡回が検出された社員（283中）</div></div>
+<div class="card"><div class="cv w">434,342</div><div class="cl">手動ステータス確認アクセス/月（削減対象）</div></div>
+<div class="card"><div class="cv">26+</div><div class="cl">巡回対象のSaaS/社内システム種類</div></div>
+</div>
+
+<h2>1. カテゴリ別の内訳（実測）</h2>
+<p style="font-size:.85rem;color:var(--muted)">各レポートの「Claude独自分析」が算出した月次の期待効果（分短縮）を機械抽出・合算。範囲値は下限を採用（保守的）。SaaS行＝Tatsuya取り込みの直接対象。</p>
+<table><thead><tr><th class="l">カテゴリ</th><th>社員数</th><th>提案数</th><th>時間/月</th><th>手動件数/月</th><th>金額/年</th></tr></thead>
+<tbody><tr class="saas">
+    <td class="l">その他SaaS/社内システムのステータス確認<span class="badge b-s">SaaS</span></td>
+    <td>175</td><td>313</td>
+    <td>789</td><td>315,723</td>
+    <td>¥28.4M</td></tr><tr class="">
+    <td class="l">Slack通知（コンテキストスイッチ）</td>
+    <td>298</td><td>1,122</td>
+    <td>574</td><td>2,819,306</td>
+    <td>¥20.7M</td></tr><tr class="">
+    <td class="l">検索・営業リサーチ</td>
+    <td>170</td><td>170</td>
+    <td>397</td><td>79,296</td>
+    <td>¥14.3M</td></tr><tr class="">
+    <td class="l">カレンダー確認</td>
+    <td>175</td><td>178</td>
+    <td>229</td><td>228,423</td>
+    <td>¥8.2M</td></tr><tr class="saas">
+    <td class="l">ジョブカン（勤怠・WF承認）<span class="badge b-s">SaaS</span></td>
+    <td>173</td><td>187</td>
+    <td>188</td><td>112,746</td>
+    <td>¥6.8M</td></tr><tr class="saas">
+    <td class="l">app-prop（業務アプリ）<span class="badge b-s">SaaS</span></td>
+    <td>5</td><td>5</td>
+    <td>8</td><td>3,192</td>
+    <td>¥0.3M</td></tr><tr class="saas">
+    <td class="l">会計（MF/freee）<span class="badge b-s">SaaS</span></td>
+    <td>2</td><td>2</td>
+    <td>5</td><td>1,046</td>
+    <td>¥0.2M</td></tr><tr class="saas">
+    <td class="l">ailead<span class="badge b-s">SaaS</span></td>
+    <td>6</td><td>6</td>
+    <td>3</td><td>1,119</td>
+    <td>¥0.1M</td></tr><tr class="saas">
+    <td class="l">Sansan（名刺）<span class="badge b-s">SaaS</span></td>
+    <td>2</td><td>2</td>
+    <td>2</td><td>390</td>
+    <td>¥0.1M</td></tr><tr class="saas">
+    <td class="l">AppSheet（業務アプリ）<span class="badge b-s">SaaS</span></td>
+    <td>1</td><td>1</td>
+    <td>1</td><td>126</td>
+    <td>¥0.0M</td></tr></tbody></table>
+<p style="font-size:.8rem;color:var(--muted)">SaaS小計 <b>995 h/月</b>（¥35.8M/年）／ 全提案合計 <b>2,194 h/月</b>（≈13.7人月・¥79.0M/年）。全提案には働き方(時間外)・資料作成・検索など非SaaSも含む。</p>
+
+<h2>2. 社員が手動巡回しているSaaS/社内システム（上位）</h2>
+<p style="font-size:.85rem;color:var(--muted)">「〇〇 のステータス変更通知化」提案から抽出。ジョブカン(WF承認)は別カテゴリで 173名・手動 112,746件/月。</p>
+<table><thead><tr><th class="l">ドメイン</th><th>該当社員数</th><th>提案数</th><th>手動件数/月</th></tr></thead>
+<tbody><tr><td class="l">atnd.ak4.jp</td><td>33</td><td>33</td><td>7,675</td></tr><tr><td class="l">srm-db.eltes.jp</td><td>31</td><td>31</td><td>22,094</td></tr><tr><td class="l">specman.eltes.jp</td><td>21</td><td>21</td><td>8,990</td></tr><tr><td class="l">eltes.atlassian.net</td><td>13</td><td>13</td><td>5,020</td></tr><tr><td class="l">irm.tsecured.jp</td><td>12</td><td>12</td><td>8,964</td></tr><tr><td class="l">p1-com-splk-sh.eltes-iri.com</td><td>12</td><td>12</td><td>50,028</td></tr><tr><td class="l">technology.backlog.jp</td><td>11</td><td>11</td><td>14,226</td></tr><tr><td class="l">eltesjp.udemy.com</td><td>10</td><td>10</td><td>2,161</td></tr><tr><td class="l">p1-tyt-splk-sh.eltes-iri.com</td><td>9</td><td>9</td><td>41,479</td></tr><tr><td class="l">eltes.zendesk.com</td><td>7</td><td>7</td><td>2,640</td></tr><tr><td class="l">metawn.obic7.obicnet.ne.jp</td><td>7</td><td>7</td><td>21,942</td></tr><tr><td class="l">dashboard.ailead.app</td><td>6</td><td>6</td><td>1,119</td></tr><tr><td class="l">www.b-direct.resonabank.co.jp</td><td>6</td><td>6</td><td>7,450</td></tr><tr><td class="l">hrmos.co</td><td>6</td><td>6</td><td>10,101</td></tr><tr><td class="l">eltes-solution.jp</td><td>5</td><td>5</td><td>3,159</td></tr><tr><td class="l">app.ferret-one.com</td><td>4</td><td>4</td><td>8,360</td></tr><tr><td class="l">vendor.app-prop.com</td><td>4</td><td>4</td><td>3,015</td></tr><tr><td class="l">eltes.smarthr.jp</td><td>4</td><td>4</td><td>5,262</td></tr></tbody></table>
+
+<h2>3. なぜTatsuyaだと効くのか</h2>
+<ul>
+<li><b>支配的な行動＝「手動ポーリング」</b>：承認・ステータスを確認するためだけに各SaaSを1日何十回も開いている（全社で月 約434,342件）。付加価値ゼロの往復。</li>
+<li><b>Tatsuyaは"束ねる"のが本質</b>：20種類以上のSaaS/社内システムをAPI/MCPで接続し、①変化があった時だけ能動通知、②「〇〇の承認どうなってる?」に自然言語で横断回答。個別にGAS/Slack botを乱立させるより、単一のAI窓口に集約できる。</li>
+<li><b>AIready基盤と直結</b>：巡回で見ていた状態を構造化して蓄積すれば、道真の検知・DX提案の土台にもなる（オートクリスタルの転記と同じ思想）。</li>
+</ul>
+
+<h2>4. 現実的な取り込みフェーズ（捕捉率を踏まえて）</h2>
+<div class="phase">
+<div class="pcard"><h3>Phase 1｜承認・勤怠</h3>ジョブカンWF＋Salesforce承認。API有・全社共通・件数最大。<br><b>狙い ≈ 188 h/月〜</b>（Jobcanのみの実測）</div>
+<div class="pcard"><h3>Phase 2｜SaaSステータス横断</h3>Zendesk/Backlog/HRMOS/SmartHR/奉行等をMCP接続し能動通知。<br><b>狙い ≈ 789 h/月</b></div>
+<div class="pcard"><h3>Phase 3｜社内独自システム</h3>srm-db/specman 等 .eltes.jp 系は専用コネクタ。API無ければCowork。<br><b>+ 深掘りで上積み</b></div>
+</div>
+<p class="note"><b>捕捉率について：</b>上記は「自動化しうる上限」。実際はAPI整備状況・運用定着で 4〜6割の捕捉が現実的。仮に <b>50%捕捉</b>なら SaaS巡回だけで <b>約 498 h/月（≈3.1人月・¥17.9M/年）</b>。</p>
+
+<div class="foot">
+<b>算定方法：</b>2026-04のLanscope操作ログ社員別レポート（Claude独自分析つき）301件から、各提案の月次期待効果（「月 約N分短縮」）を機械抽出し合算。範囲は下限採用。<br>
+<b>前提：</b>想定人件費 ¥3,000/h（間接費込み・調整可）／ 1人月=160h。金額・FTEは前提により変動。<br>
+<b>留意：</b>①数値は各レポートのモデル推計であり実測ストップウォッチではない。②カテゴリ間で削減時間が一部重複しうる（合計は上限的）。③1か月サンプル。④「その他SaaS」バケットは社内システムを含む。<br>
+生成物: log-analysis-202604/result/report_saas_tatsuya.html
+</div>
+</div></body></html>
