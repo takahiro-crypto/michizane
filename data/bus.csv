@@ -1,5 +1,4 @@
 id,name,role,roleLabel,desc,growth,head,focus,planLine
-saas,セキュリティSaaS事業部,priority,重点｜成長ドライバー,主力の成長エンジン,30,増員可（成長投資）,growth,売上 +30% / 積極投資
-legacy,受託・保守事業部,nonpriority,非重点｜収益維持,成熟・効率化フェーズ,0,削減（省人化）,cost,売上 据え置き / 利益重視
-newbiz,新規プロダクト事業部,priority,重点｜先行投資,立ち上げ・スケール前,30,増員可（立上げ）,growth,売上 +30% / 立ち上げ加速
-
+iri,IRI事業本部,priority,重点｜成長ドライバー,情報リスク・内部脅威検知の主力事業,30,増員可（成長投資）,growth,売上 +30% / 積極投資
+social,ソーシャルリスク本部,priority,重点｜成長,SNS/風評・OSINTの主力事業,25,増員可,growth,売上 +25% / 成長継続
+corp,その他事業部（コーポレート部門）,nonpriority,非重点｜効率化,コーポレート・バックオフィス,0,削減（省人化）,cost,コスト最適化 / 利益重視
