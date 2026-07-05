@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>道真 × ホーリー クロス検知 PoC（循環取引・粉飾）</title>
+<style>
+:root{--ink:#1c2b4a;--mute:#61708c;--line:#d5dce8;--card:#fff;--panel:#f4f7fb;
+--hi:#b03a6e;--hi-bg:#fdecf2;--mid:#c2610c;--mid-bg:#fff3e6;--good:#0e7c71;--mono:'Consolas','Courier New',monospace}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#eef1f6;color:var(--ink);font-family:'Yu Gothic UI','Meiryo','Hiragino Sans',sans-serif;font-size:14px;line-height:1.6;padding:26px 18px 60px}
+.wrap{max-width:1120px;margin:0 auto}
+a.back{color:var(--mute);font-size:12px;text-decoration:none;display:inline-block;margin-bottom:12px}
+.head{border-left:4px solid var(--hi);padding-left:14px;margin-bottom:14px}
+.ey{font-family:var(--mono);font-size:11px;letter-spacing:.14em;color:var(--mute);text-transform:uppercase}
+h1{font-size:22px;font-weight:800;margin-top:3px}.sub{font-size:12px;color:var(--mute);margin-top:3px}
+.note{background:var(--mid-bg);border-left:4px solid var(--mid);border-radius:0 8px 8px 0;padding:9px 13px;margin:14px 0;font-size:12.5px;color:#7a4a10}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:11px;margin:14px 0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.card b{font-size:24px;font-family:var(--mono);font-weight:800;display:block;line-height:1.1}
+.card b.hi{color:var(--hi)}.card span{font-size:10.5px;color:var(--mute)}
+h2{font-size:15px;margin:22px 0 8px}
+.ev{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-bottom:11px}
+.ev.hi{border-left:5px solid var(--hi)}.ev.mid{border-left:5px solid var(--mid)}
+.top{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.score{font-family:var(--mono);font-weight:800;font-size:20px}.score.hi{color:var(--hi)}.score.mid{color:var(--mid)}
+.rk{font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px}.rk.hi{background:var(--hi-bg);color:var(--hi)}.rk.mid{background:var(--mid-bg);color:var(--mid)}
+.ttl{font-weight:700;font-size:14.5px}.meta{font-size:12px;color:var(--mute);margin-top:2px}
+.flags{display:flex;gap:6px;flex-wrap:wrap;margin-top:9px}
+.flag{font-size:11px;background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:3px 8px}.flag b{color:var(--hi)}
+.rec{font-size:12px;color:#7a4a10;background:var(--mid-bg);border-radius:6px;padding:6px 10px;margin-top:9px}
+.cross{background:#f3e8ff;border:1px solid #c9a7e8;border-radius:6px;padding:6px 10px;margin-top:9px;font-size:12px;color:#5b2a86}
+.foot{font-size:11px;color:var(--mute);margin-top:24px;border-top:1px solid var(--line);padding-top:12px;line-height:1.7}
+svg{background:#fbfcfe;border:1px solid var(--line);border-radius:8px;margin-top:10px}
+</style></head><body><div class="wrap">
+<a class="back" href="/status/">← 進捗ダッシュボードへ</a>
+<div class="head">
+  <div class="ey">道真 × ホーリー PoC · クロス検知</div>
+  <h1>循環取引・粉飾 クロス検知コンソール</h1>
+  <div class="sub">ホーリー(e-Realty)内OBIC会計の 仕訳×取引 に対し、取引グラフの閉路検知＋仕訳ルール＋相関で検知</div>
+</div>
+<div class="note"><b>※ 匿名サンプルのPoC</b>。全数値は擬似。設計 v2.1 §5（クロス検知：相関ルール＋グラフ閉路）の実装例。e-RealtyホーリーはOBIC会計を内包するため会計連携なしで着手可（設計 §7・§13）。<b>検知は"候補"、判断は人</b>。</div>
+
+<div class="cards" id="cards"></div>
+
+<h2>循環取引 候補（取引グラフの閉路）</h2>
+<div id="cycles"></div>
+
+<h2>粉飾 候補（仕訳ルール＋削除メタ相関）</h2>
+<div id="journals"></div>
+
+<div class="foot" id="foot"></div>
+</div>
+<script>
+const yen=n=>'¥'+Number(n).toLocaleString('en-US');
+// ===== サンプル：取引先・取引(受発注)・仕訳(OBIC) =====
+const CP = {
+  self:{name:'当社(e-Realty)'}, X:{name:'X管理㈱', related:true}, Y:{name:'Y商事㈱'},
+  Z:{name:'Z興産㈱', related:true}, P:{name:'P工務店㈱'}, Q:{name:'Q不動産㈱'}
+};
+// 取引：from→to（受発注）。deliv=検収/納品の実体, gm=粗利率
+const TX = [
+  {id:'T-01', from:'self', to:'X', amount:9800000, period:'2026-Q1末', deliv:false, gm:0.02},
+  {id:'T-02', from:'X', to:'Z', amount:9750000, period:'2026-Q1末', deliv:false, gm:0.01},
+  {id:'T-03', from:'Z', to:'self', amount:9900000, period:'2026-Q1末', deliv:false, gm:0.02}, // ← self→X→Z→self の循環
+  {id:'T-04', from:'self', to:'P', amount:2400000, period:'2026-Q1', deliv:true, gm:0.18},
+  {id:'T-05', from:'P', to:'Q', amount:880000, period:'2026-Q1', deliv:true, gm:0.22},
+  {id:'T-06', from:'self', to:'Y', amount:1500000, period:'2026-Q1', deliv:true, gm:0.15},
+  {id:'T-07', from:'Q', to:'self', amount:640000, period:'2026-Q1', deliv:true, gm:0.20},
+];
+// 仕訳(OBIC)：科目・金額・取引先・起票者・期末フラグ・削除メタ回数
+const JN = [
+  {id:'J-101', acct:'売上高', amount:9900000, cp:'Z', actor:'甲', pend:true,  del:6},   // 期末集中×高額×関連(Z)×削除急増
+  {id:'J-102', acct:'外注費', amount:9800000, cp:'X', actor:'甲', pend:true,  del:5},   // 期末×関連(X)×削除
+  {id:'J-103', acct:'売上高', amount:1200000, cp:'Y', actor:'乙', pend:false, del:0},
+  {id:'J-104', acct:'修繕費', amount:180000,  cp:'P', actor:'乙', pend:false, del:0},
+  {id:'J-105', acct:'売上高', amount:640000,  cp:'Q', actor:'丙', pend:false, del:0},
+  {id:'J-106', acct:'仮払金', amount:3200000, cp:'Z', actor:'甲', pend:true,  del:2},   // 期末×関連(Z)
+  {id:'J-107', acct:'管理費', amount:95000,   cp:'P', actor:'丙', pend:false, del:0},
+  {id:'J-108', acct:'売上高', amount:820000,  cp:'Y', actor:'乙', pend:false, del:0},
+];
+const amts=JN.map(j=>j.amount).sort((a,b)=>a-b);
+const P90=amts[Math.floor(amts.length*0.9)];
+
+// ===== 循環取引：有向グラフの閉路検知 =====
+function findCycles(){
+  const adj={}; TX.forEach(t=>{ (adj[t.from]=adj[t.from]||[]).push(t); });
+  const cycles=[]; const seen=new Set();
+  function dfs(start,node,path){
+    (adj[node]||[]).forEach(t=>{
+      if(t.to===start && path.length>=2){ // 閉路成立(長さ3+)
+        const ids=path.concat(t).map(e=>e.id); const key=ids.slice().sort().join();
+        if(!seen.has(key)){ seen.add(key); cycles.push(path.concat(t)); } return;
+      }
+      if(path.length<4 && !path.some(e=>e.to===t.to) && t.to!==start){ dfs(start,t.to,path.concat(t)); }
+    });
+  }
+  Object.keys(adj).forEach(s=> dfs(s,s,[]));
+  // フィルタ：金額類似(max/min≤1.15) かつ 実体希薄(検収なしが過半)
+  return cycles.filter(c=>{
+    const a=c.map(e=>e.amount); const sim=Math.max(...a)/Math.min(...a);
+    const noDeliv=c.filter(e=>!e.deliv).length;
+    return sim<=1.15 && noDeliv>=Math.ceil(c.length/2);
+  });
+}
+const cycles=findCycles();
+
+// ===== 粉飾：仕訳ルール ＋ 削除メタ相関 =====
+function detectJournal(j){
+  const flags=[]; let dev=0, imp=Math.min(30,j.amount/400000);
+  if(j.pend && j.amount>=1000000){ flags.push({t:'期末集中', d:'期末に高額仕訳（利益調整の疑い）'}); dev+=20; }
+  if(j.amount>P90){ flags.push({t:'高額外れ値', d:`仕訳分布の上位（${yen(j.amount)}）`}); dev+=14; }
+  if(CP[j.cp]&&CP[j.cp].related){ flags.push({t:'関連当事者', d:`${CP[j.cp].name}（関連会社）との取引`}); dev+=18; }
+  if(j.del>=4){ flags.push({t:'削除メタ急増', d:`起票者の仕訳削除/修正が多発（${j.del}回・本文は不使用）`}); dev+=16; } // §5.1 メタのみ
+  return {j, flags, dev, imp};
+}
+const jres=JN.map(detectJournal).filter(r=>r.flags.length);
+// クロス：循環に関与した取引先 × 粉飾仕訳
+const cycleCPs=new Set(); cycles.forEach(c=> c.forEach(e=>{cycleCPs.add(e.from);cycleCPs.add(e.to);}));
+jres.forEach(r=>{ r.cross = cycleCPs.has(r.j.cp) && r.j.cp!=='self'; if(r.cross) r.dev+=15; });
+jres.forEach(r=> r.score=Math.min(100, Math.round(r.dev*1.0 + r.imp*0.7)));
+jres.sort((a,b)=> b.score-a.score);
+const rank=s=> s>=55?'hi': s>=30?'mid':'low';
+
+// ===== 描画 =====
+document.getElementById('cards').innerHTML =
+  `<div class="card"><b>${TX.length}</b><span>取引（受発注）</span></div>`+
+  `<div class="card"><b>${JN.length}</b><span>仕訳（OBIC）</span></div>`+
+  `<div class="card"><b class="hi">${cycles.length}</b><span>循環取引 候補</span></div>`+
+  `<div class="card"><b class="hi">${jres.filter(r=>rank(r.score)!=='low').length}</b><span>粉飾 要確認</span></div>`+
+  `<div class="card"><b class="hi">${jres.filter(r=>r.cross).length}</b><span>クロス成立（循環×粉飾）</span></div>`;
+
+function cycleSVG(c){
+  const nodes=[]; c.forEach(e=>{ if(!nodes.includes(e.from))nodes.push(e.from); });
+  const n=nodes.length, cx=170, cy=95, r=68, pt={};
+  nodes.forEach((id,i)=>{ const a=-Math.PI/2+i*2*Math.PI/n; pt[id]=[cx+r*Math.cos(a), cy+r*Math.sin(a)]; });
+  let s=`<svg viewBox="0 0 340 190" width="340" height="190">`;
+  s+=`<defs><marker id="ar" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#b03a6e"/></marker></defs>`;
+  c.forEach(e=>{ const[a,b]=[pt[e.from],pt[e.to]]; s+=`<line x1="${a[0]}" y1="${a[1]}" x2="${b[0]}" y2="${b[1]}" stroke="#b03a6e" stroke-width="2" marker-end="url(#ar)"/>`;
+    const mx=(a[0]+b[0])/2, my=(a[1]+b[1])/2; s+=`<text x="${mx}" y="${my-4}" font-size="10" fill="#7a2a52" text-anchor="middle" font-family="monospace">${yen(e.amount)}</text>`; });
+  nodes.forEach(id=>{ const[x,y]=pt[id]; s+=`<circle cx="${x}" cy="${y}" r="22" fill="${id==='self'?'#1c2b4a':'#fff'}" stroke="#b03a6e" stroke-width="2"/>`;
+    s+=`<text x="${x}" y="${y+3}" font-size="10" fill="${id==='self'?'#fff':'#1c2b4a'}" text-anchor="middle">${CP[id].name.slice(0,4)}</text>`; });
+  return s+`</svg>`;
+}
+document.getElementById('cycles').innerHTML = cycles.length? cycles.map(c=>{
+  const total=c.reduce((s,e)=>s+e.amount,0); const path=c.map(e=>CP[e.from].name).concat(CP[c[0].from].name).join(' → ');
+  return `<div class="ev hi"><div class="top"><span class="score hi">92</span><span class="rk hi">高リスク</span><span class="ttl">循環取引の疑い：${path}</span></div>
+    <div class="meta">閉路長 ${c.length} ／ 総額 ${yen(total)} ／ 取引: ${c.map(e=>e.id).join(', ')}</div>
+    <div class="flags"><span class="flag"><b>閉路</b>：自社を含む往復（A→B→C→A）</span><span class="flag"><b>同額往復</b>：金額類似（差±1.5%）</span><span class="flag"><b>実体希薄</b>：検収/納品の記録なし</span><span class="flag"><b>粗利ほぼゼロ</b></span></div>
+    ${cycleSVG(c)}
+    <div class="rec">👤 <b>推奨</b>：監査部門が閉路内の全取引の実在性（検収・物件・入出金）を確認。判断は人。</div></div>`;
+}).join('') : '<div class="ev"><span style="color:var(--mute)">循環取引の候補は検知されませんでした。</span></div>';
+
+document.getElementById('journals').innerHTML = jres.map(r=>{
+  const rk=rank(r.score), j=r.j;
+  return `<div class="ev ${rk}"><div class="top"><span class="score ${rk}">${r.score}</span><span class="rk ${rk}">${rk==='hi'?'高リスク':'要確認'}</span><span class="ttl">${j.acct}：${yen(j.amount)}</span><span class="rk" style="background:#eef;color:#2E5FB0">${CP[j.cp].name}</span></div>
+    <div class="meta">${j.id} ／ 起票者 ${j.actor} ／ ${j.pend?'期末':'期中'}</div>
+    <div class="flags">${r.flags.map(f=>`<span class="flag"><b>${f.t}</b>：${f.d}</span>`).join('')}</div>
+    ${r.cross?`<div class="cross">🔗 <b>クロス成立</b>：この取引先は循環取引の閉路にも関与（仕訳×取引グラフの相関）→ 逸脱度を底上げ</div>`:''}
+    <div class="rec">👤 <b>推奨</b>：${rk==='hi'?'監査が優先点検（証憑・関連当事者取引の開示・期末計上の妥当性）':'担当部門で確認'}。判断は人。</div></div>`;
+}).join('');
+
+document.getElementById('foot').innerHTML =
+  '検知（決定論）：循環取引＝取引グラフの閉路(長さ3+)×同額往復(max/min≤1.15)×実体希薄(検収なし過半)。粉飾＝期末集中／高額外れ値(P90超)／関連当事者／削除メタ急増(本文不使用・メタのみ §5.1)。'+
+  'クロス＝循環の閉路に関与した取引先×粉飾仕訳で逸脱度を底上げ（設計v2.1 §5）。'+
+  '<br>Phase＝e-RealtyホーリーのOBIC仕訳を仮名化エクスポート→コールドスタート→シャドー投入（設計 §13）。全数値サンプル。';
+</script>
+</body></html>
