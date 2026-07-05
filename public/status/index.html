@@ -183,6 +183,10 @@ const EVENTS = [
   {date:'2026-07-04', sys:'michi',  status:'live', title:'攻め＝オートクリスタル実測バンドを統合', desc:'AX診断の上に全社実測(995h/月・35.8百万円/年・手動巡回43万件/月)を表示。'},
   {date:'2026-07-04', sys:'michi',  status:'live', title:'守り＝道真×ホーリーPoC検知パイプライン接続', desc:'不正横領阻止額を「仕訳×Slack×ログのクロス検知」に接続(経費不正/粉飾/循環取引…)。'},
   {date:'2026-07-05', sys:'michi',  status:'live', title:'事業部を実名化（IRI/ソーシャルリスク/コーポレート）', desc:'ダミー事業部を実名へ。GitHub連携で自動デプロイ。'},
+  {date:'2026-07-05', sys:'michi',  status:'live', title:'経費不正 検知PoC（/poc）', desc:'ホーリー申請データを決定論ルールで検知→スコア＋根拠。設計v2.1のDetector実装（サンプル）。'},
+  {date:'2026-07-05', sys:'michi',  status:'live', title:'循環取引・粉飾 クロス検知PoC（/poc/cross）', desc:'取引グラフの閉路検知＋仕訳ルール＋クロス相関。SVGで閉路可視化（サンプル）。'},
+  {date:'2026-07-05', sys:'michi',  status:'doc', title:'道真 全体設計 v2.1（Opus×Fable 5）', desc:'Opus起案→Fable 5改訂→Opus確定。5層アーキ・名寄せ・検知式・誤検知運用。会計データはローカル/オンプレ実行の配置原則。/status資料に掲載。'},
+  {date:'2026-07-05', sys:'michi',  status:'doc', title:'道真×ホーリー 実データ連携（Phase2着手）', desc:'仮名化エクスポート指示書＋ローカル検知スクリプト（会計データはローカル完結）。e-Realtyから第1弾受領→経費不正2件検知。会計仕訳はOBIC7から追加エクスポートを依頼中。'},
   // 資料・設計（本番アプリではないが進捗）
   {date:'2026-07-04', sys:'auto',   status:'doc',  title:'提案書 v1.0（無駄なSaaS削減×Claude Code内製化）', desc:'二重の価値・SaaS仕分け・運用モデル(夜間SKYDIV×朝ホーリー)＋AIガバナンス。PDF/バージョン管理。'},
   {date:'2026-07-04', sys:'michi',  status:'doc',  title:'道真×ホーリー PoC設計書 v0.2', desc:'経費不正/OSINT/粉飾/循環取引/ハラスメントの検知カタログと段取り。'},
