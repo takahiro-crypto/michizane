@@ -39,8 +39,65 @@ h1{font-size:24px;font-weight:800;letter-spacing:-.02em;margin-top:4px}
 .ev .lk{font-family:var(--mono);font-size:11px;color:var(--mute);text-decoration:none}
 .ev .lk:hover{color:var(--text)}
 .foot{font-size:11px;color:var(--mute);margin-top:26px;border-top:1px solid var(--line);padding-top:14px;line-height:1.7}
+#gate{position:fixed;inset:0;background:var(--bg);z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px}
+#gate .box{max-width:430px;width:100%;text-align:center;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:34px 30px}
+#gate .eyk{font-family:var(--mono);font-size:11px;letter-spacing:.16em;color:var(--mute)}
+#gate h2{font-size:20px;font-weight:800;margin:8px 0 6px}
+#gate p{font-size:13px;color:var(--mute);line-height:1.75}
+#gate #gsi{display:flex;justify-content:center;margin-top:20px;min-height:44px}
+#gate .err{color:#F0704F;font-size:12.5px;margin-top:16px;line-height:1.65}
+#gate .tmp{margin-top:16px;font-size:12px;color:var(--mute);text-decoration:underline;cursor:pointer;background:none;border:none}
 </style></head>
-<body><div class="wrap">
+<body>
+<!-- @eltes.co.jp ドメイン ゲート -->
+<div id="gate">
+  <div class="box">
+    <div class="eyk">ELTES · CONFIDENTIAL</div>
+    <h2>社内向けページ</h2>
+    <p>このページはエルテス（<b>@eltes.co.jp</b>）のアカウント専用です。<br>Googleでサインインしてください。</p>
+    <div id="gsi"></div>
+    <div class="err" id="gate-err"></div>
+    <button class="tmp" id="gate-tmp" style="display:none"></button>
+  </div>
+</div>
+<script src="https://accounts.google.com/gsi/client" async></script>
+<script>
+(function(){
+  // ▼ 管理者設定：エルテスのGoogle OAuth ウェブ クライアントID（*.apps.googleusercontent.com）を入れる。
+  //   併せて GCP のそのクライアントの「承認済みJavaScript生成元」に https://michizane.vercel.app を追加。
+  var CLIENT_ID = 'REPLACE_ELTES_GOOGLE_CLIENT_ID.apps.googleusercontent.com';
+  var DOMAIN = 'eltes.co.jp';
+  var gate = document.getElementById('gate');
+  var errEl = document.getElementById('gate-err');
+  var tmpEl = document.getElementById('gate-tmp');
+  function pass(){ try{ sessionStorage.setItem('mz_status_ok','1'); }catch(e){} gate.style.display='none'; }
+  try{ if(sessionStorage.getItem('mz_status_ok')==='1'){ gate.style.display='none'; return; } }catch(e){}
+  function decode(jwt){ try{ var p=jwt.split('.')[1].replace(/-/g,'+').replace(/_/g,'/'); return JSON.parse(decodeURIComponent(escape(atob(p)))); }catch(e){ return {}; } }
+  window.__onCred = function(res){
+    var c = decode(res.credential);
+    var email = (c.email||'').toLowerCase();
+    var domain = (c.hd||'').toLowerCase() || (email.split('@')[1]||'');
+    if(domain===DOMAIN){ pass(); }
+    else { errEl.innerHTML = 'このページはエルテス（@'+DOMAIN+'）のアカウント専用です。<br>いま「'+(email||'別アカウント')+'」でサインインしています。右上のGoogleアカウントをエルテスのものに切り替えて、もう一度お試しください。'; }
+  };
+  (function ready(){
+    if(!window.google||!google.accounts||!google.accounts.id){ setTimeout(ready,250); return; }
+    if(CLIENT_ID.indexOf('REPLACE_')===0){
+      // 未設定：ロックアウトを避け暫定公開。クライアントID設定で本ゲートが有効化される。
+      errEl.textContent = 'アクセス制限は設定準備中です（管理者がGoogleクライアントIDを設定すると有効になります）。';
+      tmpEl.style.display='inline-block'; tmpEl.textContent='設定完了までは閲覧を続ける →'; tmpEl.onclick=pass;
+      return;
+    }
+    try{
+      google.accounts.id.initialize({ client_id: CLIENT_ID, callback: window.__onCred });
+      google.accounts.id.renderButton(document.getElementById('gsi'), { theme:'filled_blue', size:'large', text:'signin_with', locale:'ja' });
+    }catch(e){
+      errEl.textContent = 'サインインの読み込みに失敗しました。通信環境をご確認のうえ、ページを再読み込みしてください。';
+    }
+  })();
+})();
+</script>
+<div class="wrap">
 <div class="head">
   <div>
     <div class="ey">ELTES · Progress</div>
@@ -67,6 +124,14 @@ h1{font-size:24px;font-weight:800;letter-spacing:-.02em;margin-top:4px}
     <a href="docs/saas_tatsuya.html" target="_blank" style="background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;text-decoration:none;color:var(--text);display:block">
       <div style="font-weight:700;font-size:13.5px">📊 SaaS→Tatsuya 効率化試算</div>
       <div style="font-size:11.5px;color:var(--mute);margin-top:5px;line-height:1.5">操作ログ実測（301人）に基づくSaaS巡回削減の試算（HTML）</div>
+    </a>
+    <a href="docs/skydiv.html" target="_blank" style="background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;text-decoration:none;color:var(--text);display:block">
+      <div style="font-weight:700;font-size:13.5px">🌙 SKYDIV 運用モデル</div>
+      <div style="font-size:11.5px;color:var(--mute);margin-top:5px;line-height:1.5">夜間SKYDIV×朝ホーリー＋AIガバナンス（道真でAI自身も監視）</div>
+    </a>
+    <a href="docs/proposal.html" target="_blank" style="background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;text-decoration:none;color:var(--text);display:block">
+      <div style="font-weight:700;font-size:13.5px">📄 提案書（HTML版・スクロール閲覧）</div>
+      <div style="font-size:11.5px;color:var(--mute);margin-top:5px;line-height:1.5">v1.0 の全文をブラウザでそのまま読む（PDFと同内容）</div>
     </a>
   </div>
 </div>

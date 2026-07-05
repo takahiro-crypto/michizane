@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="ja"><head><meta charset="utf-8">
+<title>オートクリスタル コアサービス提案 — 無駄なSaaS削減 × Claude Code内製化</title>
+<style>
+@page { size: A4; margin: 15mm 15mm 15mm 15mm; }
+:root{
+--text:#1C2B4A;--muted:#61708C;--accent:#C8860A;--warn:#C2410C;--warn-bg:#FFF7ED;
+--primary:#2E5FB0;--primary-bg:#EEF4FF;--good:#0E7C71;--good-bg:#EAF6F4;
+--cut:#B23A48;--cut-bg:#FDECEE;--rep:#8A5A00;--rep-bg:#FCF3DF;--keep:#0B6B60;--keep-bg:#E7F4F2;
+--border:#D5DCE8;--panel:#F4F7FB;--mono:'Consolas','Courier New',monospace;}
+*{box-sizing:border-box;margin:0;padding:0}
+body{color:var(--text);font-family:'Yu Gothic UI','Meiryo','Hiragino Sans',sans-serif;font-size:10.2pt;line-height:1.6;}
+.page{page-break-after:always;} .page:last-child{page-break-after:auto;}
+h1{font-size:18pt;font-weight:700;line-height:1.3;}
+h2{font-size:12.5pt;font-weight:700;color:var(--primary);margin:13pt 0 6pt;padding-bottom:3pt;border-bottom:2px solid var(--primary);}
+h3{font-size:10.6pt;font-weight:700;margin:9pt 0 3pt;}
+p{margin:4pt 0;} .small{font-size:8.2pt;color:var(--muted);}
+.lead-ttl{border-left:5px solid var(--primary);padding-left:12pt;margin-bottom:12pt;}
+.ey{font-family:var(--mono);font-size:8pt;letter-spacing:.12em;color:var(--muted);text-transform:uppercase;}
+.sub{font-size:9pt;color:var(--primary);font-weight:600;margin-top:3pt;font-family:var(--mono);}
+.meta{font-size:8.5pt;color:var(--muted);margin-top:9pt;}
+.good{background:var(--good-bg);border-left:4px solid var(--good);border-radius:0 8px 8px 0;padding:8pt 11pt;margin:9pt 0;font-size:9.2pt;}
+.note{background:var(--warn-bg);border-left:4px solid var(--warn);border-radius:0 8px 8px 0;padding:8pt 11pt;margin:9pt 0;font-size:8.6pt;} .note b{color:var(--warn);}
+.hero{display:flex;gap:10pt;margin:12pt 0;}
+.hcard{flex:1;color:#fff;border-radius:10px;padding:13pt 15pt;}
+.hcard.a{background:var(--primary);} .hcard.b{background:var(--good);}
+.hcard .big{font-size:21pt;font-weight:700;font-family:var(--mono);line-height:1.05;}
+.hcard .cap{font-size:8.4pt;margin-top:4pt;opacity:.92;}
+.flow{background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:9pt 12pt;font-size:8.8pt;margin:7pt 0;text-align:center;} .flow b{color:var(--primary);}
+table{border-collapse:collapse;width:100%;font-size:8.6pt;margin:5pt 0;}
+th{background:var(--text);color:#fff;padding:4pt 6pt;text-align:right;font-size:7.5pt;} th.l{text-align:left}
+td{padding:3.5pt 6pt;border-bottom:1px solid var(--border);text-align:right;font-family:var(--mono);} td.l{text-align:left;font-family:inherit;}
+.pill{display:inline-block;font-size:7pt;font-weight:700;padding:1pt 5pt;border-radius:10px;}
+.p-keep{background:var(--keep-bg);color:var(--keep);} .p-rep{background:var(--rep-bg);color:var(--rep);} .p-cut{background:var(--cut-bg);color:var(--cut);}
+ul{margin:3pt 0 3pt 15pt;} li{margin:2.5pt 0;}
+.cards3{display:flex;gap:8pt;margin:6pt 0;}
+.c3{flex:1;border:1px solid var(--border);border-radius:8px;padding:8pt 10pt;font-size:8.4pt;}
+.c3 h4{font-size:9.4pt;margin-bottom:3pt;}
+.phase{display:flex;gap:8pt;margin:6pt 0;}
+.pcard{flex:1;background:#fff;border:1px solid var(--border);border-radius:8px;padding:8pt 10pt;font-size:8.4pt;}
+.pcard h4{font-size:9.2pt;color:var(--primary);margin-bottom:3pt;} .pcard .tag{font-family:var(--mono);font-size:7.2pt;color:var(--good);font-weight:700;margin-top:3pt;}
+.foot{font-size:7.4pt;color:var(--muted);margin-top:9pt;border-top:1px solid var(--border);padding-top:5pt;line-height:1.6;}
+</style></head><body>
+
+<!-- PAGE 1 -->
+<div class="page">
+<div class="lead-ttl">
+<div class="ey">ELTES · Autocrystal Core Service</div>
+<h1>無駄なSaaSを削減し、Claude Code で内製化する<br>——「Tatsuya 業務フロント」構想</h1>
+<div class="sub">オートクリスタル コアサービス提案 ／ 2026-04 操作ログ実測ベース</div>
+<div class="meta">対象: 社員別ログ分析 301件（個人283名）／ 期間 2026-04 ／ ELTES AI推進室　｜　<b>版 v1.0（2026-07-04）</b></div>
+</div>
+
+<div class="good" style="font-size:9.6pt">
+<b>コンセプト：</b> 操作ログで<b>「無駄なSaaS」を特定</b>し、必要なものは Tatsuya（社内チャット）に束ね、<b>汎用的・冗長・割高なSaaSは Claude Code で内製リプレイス</b>する。社員は Tatsuya 上で申請・承認・照会を自然言語で回すだけ。効果は<b>二重</b>——①手作業の削減（労務）と②<b>SaaSライセンス費そのものの削減</b>。蓄積データは道真の検知・DX提案の土台になる。
+</div>
+
+<div class="hero">
+<div class="hcard a">
+<div class="cap">① 労務削減（手動SaaS巡回の実測）</div>
+<div class="big">約 995 h/月</div>
+<div class="cap">≈ 6.2人月 ／ 年 約 ¥35.8M（想定単価¥3,000/h）</div>
+</div>
+<div class="hcard b">
+<div class="cap">② SaaSライセンス削減（内製化・統合で解約）</div>
+<div class="big">＋α（要契約データ）</div>
+<div class="cap">重複SaaS統合＋汎用WFの内製で月額を停止</div>
+</div>
+</div>
+
+<h2>循環モデル</h2>
+<div class="flow">
+<b>操作ログ分析</b> → <b>SaaS仕分け</b>（残す/内製/廃止） → <b>Claude Codeで内製リプレイス</b> → <b>Tatsuyaに集約</b>（申請・承認・照会） → <b>AIready蓄積</b> → 道真/DX提案<br>
+<span class="small">└ 価値：労務削減（実測995h/月）＋ SaaSライセンス削減（解約分）を同時に取りにいく ┘</span>
+</div>
+
+<h2>1. 背景と方法</h2>
+<ul>
+<li><b>狙い</b>：ジョブカン・AppSheet 等のSaaS業務を、連携ではなく「削減＋Claude Code内製」で Tatsuya に集約する。</li>
+<li><b>データ</b>：社員別 操作ログ分析レポート301件（Lanscope・2026-04）。各レポートの自動化提案の月次期待効果（「月 約N分短縮」）を機械抽出・合算（範囲は下限採用＝保守的）。</li>
+<li><b>換算前提</b>：想定人件費¥3,000/h（間接費込み・調整可）、1人月=160h。</li>
+</ul>
+<div class="note"><b>数値の性格：</b>労務削減はモデル推計であり実測ストップウォッチではない。カテゴリ間で一部重複しうる（合計は上限的）。1か月サンプル。SaaSライセンス削減額は各社の契約席数×月額が必要で、本書では方式と参考値のみ示す。<b>意思決定は桁感で行い、精緻化は実契約データで別途。</b></div>
+</div>
+
+<!-- PAGE 2 -->
+<div class="page">
+<h2>2. 主要な発見 — 「手動巡回」と「SaaSの重複」</h2>
+<p>最多の行動は、承認・ステータス確認のためだけに各サービスを開く<b>手動巡回</b>（全社 月 約43万件）。加えて、同種SaaSの<b>重複契約</b>の兆候（会計、課題管理など）が見える。前者は内製フロントで、後者は統合廃止で削れる。</p>
+<table>
+<thead><tr><th class="l">領域（SaaS巡回）</th><th>社員数</th><th>時間/月</th><th>手動件数/月</th><th>労務/年</th></tr></thead>
+<tbody>
+<tr><td class="l">その他SaaS/社内システムのステータス確認</td><td>175</td><td>789h</td><td>315,723</td><td>¥28.4M</td></tr>
+<tr><td class="l">ジョブカン（勤怠・稟議・WF承認）</td><td>173</td><td>188h</td><td>112,746</td><td>¥6.8M</td></tr>
+<tr><td class="l">app-prop / ailead / MF / Sansan / AppSheet ほか</td><td>—</td><td>約18h</td><td>5,873</td><td>¥0.6M</td></tr>
+</tbody></table>
+<p class="small">SaaS巡回 小計 <b>約995 h/月</b>（¥35.8M/年）。参考：非SaaS（Slack/検索/資料等）も含む全提案合計は約2,194 h/月。</p>
+
+<h2>3. SaaS仕分けフレーム（3分類）</h2>
+<div class="cards3">
+<div class="c3"><h4><span class="pill p-keep">KEEP</span> 残す＋束ねる</h4>専門性・法令・規模で内製が非現実的。<b>Tatsuyaから連携で叩く</b>。（例：Salesforce, 奉行, SmartHR/HRMOS, Zendesk, Splunk）</div>
+<div class="c3"><h4><span class="pill p-rep">REPLACE</span> 内製する</h4>「フォーム＋承認＋ステータス」の汎用業務／API貧弱／少席で割高。<b>Claude Codeで作り替えSaaS解約</b>。（例：Jobcan WF承認, 受付, 社内独自）</div>
+<div class="c3"><h4><span class="pill p-cut">CUT</span> 廃止・統合</h4>同種SaaSが重複／低利用。<b>1本化・停止</b>。（例：会計ツール重複, 課題管理二重）</div>
+</div>
+
+<h2>4. ログを当てた仕分け（案・要確認）</h2>
+<table>
+<thead><tr><th class="l">システム</th><th>利用者</th><th class="l">仕分け</th><th class="l">根拠</th></tr></thead>
+<tbody>
+<tr><td class="l">Jobcan WF承認（稟議・経費）</td><td>173</td><td class="l"><span class="pill p-rep">REPLACE</span></td><td class="l">汎用WF＝内製容易。<b>API承認不可</b>で連携が詰む→内製が最適。承認MVP実装済</td></tr>
+<tr><td class="l">Jobcan 勤怠</td><td>173</td><td class="l"><span class="pill p-keep">KEEP?</span></td><td class="l">打刻・36協定など法令寄り。分離して残す判断も</td></tr>
+<tr><td class="l">Salesforce</td><td>~82</td><td class="l"><span class="pill p-keep">KEEP</span></td><td class="l">SFAは規模大・内製非現実的。連携で束ねる</td></tr>
+<tr><td class="l">奉行/OBIC・MoneyForward・freee</td><td>7/19/4</td><td class="l"><span class="pill p-cut">CUT統合</span></td><td class="l">会計・経費が<b>複数重複</b>の疑い→1本化</td></tr>
+<tr><td class="l">Jira・Backlog</td><td>13/11</td><td class="l"><span class="pill p-cut">CUT統合</span></td><td class="l">課題管理が<b>二重</b>→どちらかに寄せる</td></tr>
+<tr><td class="l">srm-db / specman（.eltes.jp）</td><td>31/21</td><td class="l"><span class="pill p-rep">REPLACE</span></td><td class="l">社内独自の老朽化。作り替え・Tatsuya化（ライセンスは無いが保守削減）</td></tr>
+<tr><td class="l">atnd（受付/予約）</td><td>33</td><td class="l"><span class="pill p-rep">REPLACE</span></td><td class="l">単機能。内製容易</td></tr>
+<tr><td class="l">ailead / app-prop / ferret-one</td><td>4〜6</td><td class="l"><span class="pill p-cut">要確認</span></td><td class="l">低利用・Salesforceと機能重複の疑い</td></tr>
+<tr><td class="l">SmartHR / HRMOS / Zendesk</td><td>4/6/7</td><td class="l"><span class="pill p-keep">KEEP</span></td><td class="l">労務・採用・サポートは法令/専門。連携</td></tr>
+<tr><td class="l">Splunk / tsecured</td><td>12/12</td><td class="l"><span class="pill p-keep">KEEP</span></td><td class="l">セキュリティ監視は専門</td></tr>
+</tbody></table>
+<div class="good"><b>内製リプレイスの筆頭＝Jobcan WF承認</b>（利用者最多＋API詰み＋MVP済）。<b>削減の筆頭＝会計ツール重複・課題管理二重</b>の統合。</div>
+</div>
+
+<!-- PAGE 3 -->
+<div class="page">
+<h2>5. Claude Code が「開発エンジン」（実証済み）</h2>
+<p>内製化の手段はまさに Claude Code。SaaSを買う代わりに、業務システムを<b>数分〜数日で作る</b>。本提案の裏付けとして、以下は既に Claude Code で構築・本番稼働している。</p>
+<ul>
+<li><b>オートクリスタル自動生成コア</b>：業務の説明文から入力画面を自動生成 → 従来SaaSへ転記＋AIready構造化（設計/運用を分離し、社員はロック済み画面を使うだけ）。</li>
+<li><b>承認フローMVP</b>：承認待ちを能動表示 → AI要約つきカードで承認/差戻し → 自然言語で状況照会 → AIready蓄積。<b>Jobcan WFのリプレイス試作</b>。</li>
+<li><b>アダプタ層</b>：コネクタ差し替えで「残すSaaSは連携／内製は自前実行」を1つの仕組みで扱う。</li>
+</ul>
+<p class="small">＝「Claude Codeで業務システムを内製できる」証拠そのもの。内製の限界費用は従来の受託開発より桁で低い。</p>
+
+<h2>6. 二重の価値（労務 ＋ ライセンス）</h2>
+<h3>① 労務削減（実測・捕捉率別）</h3>
+<table>
+<thead><tr><th class="l">シナリオ</th><th>削減/月</th><th>FTE</th><th>金額/年</th></tr></thead>
+<tbody>
+<tr><td class="l">上限（自動化しうる全量・SaaS巡回）</td><td>995h</td><td>6.2人月</td><td>¥35.8M</td></tr>
+<tr><td class="l">現実解（50%捕捉）※目標</td><td>498h</td><td>3.1人月</td><td>¥17.9M</td></tr>
+<tr><td class="l">Phase1のみ（Jobcan WF内製）</td><td>188h〜</td><td>1.2人月〜</td><td>¥6.8M〜</td></tr>
+</tbody></table>
+<h3>② SaaSライセンス削減（内製化・統合で解約）</h3>
+<p class="small">算式：<b>削減額 ＝ Σ(解約SaaSの席数 × 月額) × 12</b>。実額は契約データが必要。以下は<b>公表価格ベースの参考値（要実契約確認）</b>。</p>
+<table>
+<thead><tr><th class="l">対象</th><th class="l">削減の型</th><th>参考規模</th><th>参考/年</th></tr></thead>
+<tbody>
+<tr><td class="l">Jobcan WF（承認）を内製化</td><td class="l">WFライセンス解約</td><td>173席</td><td>約¥1.0M〜</td></tr>
+<tr><td class="l">会計ツール重複の統合</td><td class="l">重複解約</td><td>要調査</td><td>要データ</td></tr>
+<tr><td class="l">課題管理(Jira/Backlog)二重の一本化</td><td class="l">重複解約</td><td>13/11席</td><td>要データ</td></tr>
+<tr><td class="l">低利用ツール(ailead等)の停止</td><td class="l">停止</td><td>4〜6席</td><td>要データ</td></tr>
+</tbody></table>
+<p class="small">※参考値は公表価格からの概算で、実契約の席数・プランで変動。契約一覧をいただければ確定させる。</p>
+</div>
+
+<!-- PAGE 4: 運用モデル（SKYDIV夜間 × 朝ホーリー） -->
+<div class="page">
+<h2>7. 安全に回す運用モデル ― 夜間SKYDIV × 朝ホーリー</h2>
+<p>内製リプレイス・道真の検知・設計書の自動生成を「いつ・どこで・誰の責任で」動かすかの運用設計。<b>夜間は隔離VDIでAIが読み取り・下書き、朝は人が確認・判断</b>。統制を効かせたまま24時間活用する。</p>
+<div class="cards3" style="align-items:stretch;margin-top:8pt">
+  <div class="c3">
+    <h4>🌙 夜間（社員不在）― SKYDIV（隔離VDI）</h4>
+    <div class="small" style="margin:2pt 0 5pt">空きデスクトップでAIが自動実行</div>
+    <ul>
+      <li>プロセスマイニング → <b>設計書のたたき台</b>（SKYSEAログから as-is 業務を抽出）</li>
+      <li><b>道真</b>で突合・スコアリング → 不正検知の候補（持ち出し・退職者リスク）</li>
+      <li><b>読み取り・下書きのみ</b>。不可逆操作（送信・送金・同意）はしない</li>
+    </ul>
+  </div>
+  <div class="c3">
+    <h4>☀️ 朝（出社後）― ホーリー（タツヤ）</h4>
+    <div class="small" style="margin:2pt 0 5pt">朝ダイジェストで結果を差し戻し、人が確認・判断</div>
+    <ul>
+      <li>設計書ドラフトを<b>レビュー・確定</b>（規程・承認ルートは人が補う）</li>
+      <li>不正検知の候補を<b>管理部門・監査が点検</b></li>
+      <li>不可逆な対応（送信・処分・確定）は<b>必ず人が判断</b></li>
+    </ul>
+  </div>
+</div>
+<div class="good"><b>ガードレール：</b>隔離（SKYDIV）／ allowlist ／ 反復回数の上限 ／ 全操作のログ ／ 不可逆操作は人 ／ <b>「AIはセンサー、判断は人」</b></div>
+<div class="good" style="background:var(--primary-bg);border-left-color:var(--primary)"><b>AIガバナンス ― 道真でAI自身も監視（IRI）：</b>夜間に自律実行するAIエージェントの操作ログも<b>道真AI連携</b>で突合・スコアリングし、allowlist逸脱・想定外操作・過剰な反復を検知。<b>社員だけでなくAIの挙動も監視対象</b>にする二重の統制（監視は IRI が担う）。</div>
+<div class="note"><b>実装のポイント：</b>GUI操作が要る所だけ computer use。ログ突合などは通常のバッチ処理で十分。夜間はVDIの空きシートを活用するのでコスト増を抑えられる。</div>
+<p class="small">この運用モデルにより、オートクリスタルの内製リプレイス／道真の検知／設計書の自動生成を、統制を効かせたまま「<b>夜間に仕込み → 朝に人が確定</b>」で回せる。今回の操作ログ分析（SaaS巡回の実測）と同じSKYSEA/操作ログを、夜間バッチの入力としてそのまま活用できる。</p>
+</div>
+
+<!-- PAGE 5 -->
+<div class="page">
+<h2>8. 取り込み優先順位（決定）</h2>
+<p class="small">軸＝内製容易性 × 対象人数 × 手動巡回量／削減インパクト。</p>
+<table>
+<thead><tr><th class="l">優先</th><th class="l">対象</th><th class="l">アクション</th><th class="l">狙い</th></tr></thead>
+<tbody>
+<tr><td class="l">Tier1</td><td class="l">Jobcan WF承認</td><td class="l"><span class="pill p-rep">REPLACE</span> 内製</td><td class="l">173名・API詰み。MVPを実運用へ。労務+WF解約</td></tr>
+<tr><td class="l">Tier1</td><td class="l">会計/課題管理の重複</td><td class="l"><span class="pill p-cut">CUT</span> 統合</td><td class="l">重複解約で即ライセンス削減</td></tr>
+<tr><td class="l">Tier2</td><td class="l">社内独自(srm-db/specman)・受付(atnd)</td><td class="l"><span class="pill p-rep">REPLACE</span></td><td class="l">老朽・単機能を内製更新しTatsuya化</td></tr>
+<tr><td class="l">Tier3</td><td class="l">Salesforce/奉行/Zendesk/SmartHR等</td><td class="l"><span class="pill p-keep">KEEP</span> 連携</td><td class="l">残してTatsuyaに束ねる</td></tr>
+</tbody></table>
+
+<h2>9. ロードマップ</h2>
+<div class="phase">
+<div class="pcard"><h4>Phase 1｜内製リプレイス</h4>Jobcan WF承認を内製（申請・承認・差戻し・NL照会）。会計/課題管理の重複を統合。<div class="tag">労務188h/月〜 ＋ ライセンス削減</div></div>
+<div class="pcard"><h4>Phase 2｜社内独自の内製更新</h4>srm-db/specman/atnd を作り替えTatsuya化。API無しはCowork。<div class="tag">保守削減＋巡回削減</div></div>
+<div class="pcard"><h4>Phase 3｜KEEP群を連携集約</h4>Salesforce/奉行/Zendesk等をTatsuyaに束ね能動通知・横断照会。<div class="tag">〜789h/月</div></div>
+</div>
+
+<h2>10. Phase 1 の実現性と留意</h2>
+<div class="note"><b>Jobcan WF APIは読み取り専用</b>（GET /requests/ のみ。申請作成・承認・差戻しのAPIは無い）。<b>→ だから「連携」ではなく「Claude Code内製リプレイス」が正解</b>。読み取りAPIは能動通知・NL照会に活用し、承認操作は内製フローで持つ。<br>
+統制：誤承認は重大。承認権限・代理承認・職務分掌を正しく写像し、<b>監査ログ・最終承認は人間</b>。認証情報の安全な保管。</div>
+
+<h2>11. 依頼したい入力</h2>
+<ul>
+<li><b>SaaS契約一覧</b>（サービス名・席数・月額・更新月）→ ライセンス削減額を確定。</li>
+<li><b>仕分けの妥当性確認</b>（特にKEEP/REPLACE/CUTの境界、Jobcan勤怠の扱い）。</li>
+<li>Phase1の対象部署・パイロット範囲。</li>
+</ul>
+
+<div class="foot">
+<b>算定方法：</b>2026-04 Lanscope操作ログ社員別レポート301件から自動化提案の月次期待効果を機械抽出・合算（範囲は下限採用）。<b>前提：</b>¥3,000/h・1人月160h。ライセンス参考値は公表価格ベースの概算。<br>
+<b>留意：</b>①労務はモデル推計 ②カテゴリ間重複あり合計は上限的 ③1か月サンプル ④SaaSライセンス額は実契約要確認 ⑤仕分けは案であり要合意。<br>
+ELTES AI推進室 ／ オートクリスタル（無駄なSaaS削減 × Claude Code内製化） ／ 2026-04 ／ 版 v1.0（2026-07-04）
+</div>
+</div>
+</body></html>
