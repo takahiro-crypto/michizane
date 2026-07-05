@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>道真 × ホーリー 経費不正検知 PoC</title>
+<style>
+:root{--bg:#0f1420;--card:#fff;--ink:#1c2b4a;--mute:#61708c;--line:#d5dce8;--panel:#f4f7fb;
+--hi:#b03a6e;--hi-bg:#fdecf2;--mid:#c2610c;--mid-bg:#fff3e6;--low:#3a7;--good:#0e7c71;
+--mono:'Consolas','Courier New',monospace}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#eef1f6;color:var(--ink);font-family:'Yu Gothic UI','Meiryo','Hiragino Sans',sans-serif;font-size:14px;line-height:1.6;padding:26px 18px 60px}
+.wrap{max-width:1120px;margin:0 auto}
+.head{border-left:4px solid var(--hi);padding-left:14px;margin-bottom:16px}
+.ey{font-family:var(--mono);font-size:11px;letter-spacing:.14em;color:var(--mute);text-transform:uppercase}
+h1{font-size:22px;font-weight:800;margin-top:3px}
+.sub{font-size:12px;color:var(--mute);margin-top:3px}
+.note{background:var(--mid-bg);border-left:4px solid var(--mid);border-radius:0 8px 8px 0;padding:9px 13px;margin:14px 0;font-size:12.5px;color:#7a4a10}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:11px;margin:14px 0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.card b{font-size:24px;font-family:var(--mono);font-weight:800;display:block;line-height:1.1}
+.card b.hi{color:var(--hi)} .card b.mid{color:var(--mid)}
+.card span{font-size:10.5px;color:var(--mute)}
+h2{font-size:15px;margin:22px 0 8px}
+.ev{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-bottom:11px}
+.ev.rank-hi{border-left:5px solid var(--hi)} .ev.rank-mid{border-left:5px solid var(--mid)} .ev.rank-low{border-left:5px solid var(--low)}
+.ev .top{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.score{font-family:var(--mono);font-weight:800;font-size:20px;min-width:44px}
+.score.hi{color:var(--hi)} .score.mid{color:var(--mid)} .score.low{color:var(--low)}
+.rk{font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px}
+.rk.hi{background:var(--hi-bg);color:var(--hi)} .rk.mid{background:var(--mid-bg);color:var(--mid)} .rk.low{background:#e7f4f2;color:var(--good)}
+.ev .ttl{font-weight:700;font-size:14.5px}
+.meta{font-size:12px;color:var(--mute);margin-top:2px}
+.flags{display:flex;gap:6px;flex-wrap:wrap;margin-top:9px}
+.flag{font-size:11px;background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:3px 8px}
+.flag b{color:var(--hi)}
+.axes{display:flex;gap:14px;flex-wrap:wrap;margin-top:9px;font-size:11px;color:var(--mute)}
+.axes .a b{color:var(--ink);font-family:var(--mono)}
+.rec{font-size:12px;color:#7a4a10;background:var(--mid-bg);border-radius:6px;padding:6px 10px;margin-top:9px}
+table{border-collapse:collapse;width:100%;font-size:12px;background:var(--card);border:1px solid var(--line);border-radius:8px;overflow:hidden;margin-top:6px}
+th{background:var(--ink);color:#fff;padding:6px 8px;text-align:left;font-size:10.5px}
+td{padding:5px 8px;border-bottom:1px solid var(--line)}
+tr.clean td{color:var(--mute)}
+.foot{font-size:11px;color:var(--mute);margin-top:24px;border-top:1px solid var(--line);padding-top:12px;line-height:1.7}
+a.back{color:var(--mute);font-size:12px;text-decoration:none;display:inline-block;margin-bottom:12px}
+</style></head><body><div class="wrap">
+<a class="back" href="/status/">← 進捗ダッシュボードへ</a>
+<div class="head">
+  <div class="ey">道真 × ホーリー PoC · 第1弾 経費不正</div>
+  <h1>経費不正 検知コンソール</h1>
+  <div class="sub">ホーリー（タツヤ）の申請データ形式に対し、道真が決定論ルールで検知 → スコア＋根拠 → 人が確認</div>
+</div>
+
+<div class="note"><b>※ これは匿名サンプルデータのPoC</b>（検知ロジック検証用）。氏名・金額は擬似値。実運用では ホーリーNeon の <code>applications(expense)</code> を匿名エクスポートして投入（Phase2）。<b>検知は"候補"、最終判断は人</b>。</div>
+
+<div class="cards" id="cards"></div>
+
+<h2>要確認 事案（スコア降順）</h2>
+<div id="events"></div>
+
+<h2>全申請（監査ログ）</h2>
+<div style="overflow-x:auto"><table id="all"><thead><tr>
+<th>ID</th><th>申請者</th><th>部署</th><th>件名</th><th>科目</th><th>金額</th><th>起票</th><th>承認</th><th>スコア</th>
+</tr></thead><tbody id="allbody"></tbody></table></div>
+
+<div class="foot" id="foot"></div>
+</div>
+
+<script>
+// ===== サンプル：ホーリー applications(expense) 形式（匿名・擬似値）=====
+// created/decided は ISO。decided_by=承認者。amount=円。
+const APPS = [
+  {id:'EXP-0407-011', who:'A田', dept:'営業一部', title:'クライアント訪問の交通費', cat:'交通費', amount:3200, created:'2026-04-07T10:12', decided:'2026-04-07T15:40', by:'M本部長', receipt:true},
+  {id:'EXP-0407-014', who:'B佐', dept:'営業二部', title:'取引先との会食', cat:'接待費', amount:42000, created:'2026-04-07T18:22', decided:'2026-04-08T11:03', by:'M本部長', receipt:true},
+  {id:'EXP-0408-003', who:'C鈴', dept:'管理部', title:'文具・消耗品', cat:'消耗品', amount:5400, created:'2026-04-08T09:40', decided:'2026-04-08T17:10', by:'N部長', receipt:true},
+  {id:'EXP-0409-021', who:'D高', dept:'営業一部', title:'接待（新規開拓）', cat:'接待費', amount:98000, created:'2026-04-09T20:15', decided:'2026-04-10T10:00', by:'M本部長', receipt:true},
+  {id:'EXP-0410-005', who:'D高', dept:'営業一部', title:'接待（継続商談）', cat:'接待費', amount:97000, created:'2026-04-13T19:50', decided:'2026-04-14T09:30', by:'M本部長', receipt:true},
+  {id:'EXP-0410-018', who:'E伊', dept:'開発部', title:'書籍購入', cat:'消耗品', amount:6800, created:'2026-04-10T14:02', decided:'2026-04-11T16:20', by:'N部長', receipt:true},
+  {id:'EXP-0413-002', who:'F山', dept:'営業二部', title:'出張交通費（大阪）', cat:'交通費', amount:28600, created:'2026-04-13T08:55', decided:'2026-04-13T18:40', by:'M本部長', receipt:true},
+  {id:'EXP-0414-030', who:'G中', dept:'管理部', title:'高額接待（役員会食）', cat:'接待費', amount:480000, created:'2026-04-14T21:30', decided:'2026-04-14T21:33', by:'G中', receipt:false},
+  {id:'EXP-0415-009', who:'H小', dept:'営業一部', title:'会議室ケータリング', cat:'会議費', amount:12000, created:'2026-04-15T11:10', decided:'2026-04-16T10:05', by:'M本部長', receipt:true},
+  {id:'EXP-0416-012', who:'I渡', dept:'開発部', title:'クラウド費立替', cat:'その他', amount:33000, created:'2026-04-16T13:22', decided:'2026-04-17T15:00', by:'N部長', receipt:false},
+  {id:'EXP-0417-007', who:'B佐', dept:'営業二部', title:'交通費（月まとめ）', cat:'交通費', amount:9800, created:'2026-04-17T17:30', decided:'2026-04-18T11:00', by:'M本部長', receipt:true},
+  {id:'EXP-0420-025', who:'J斎', dept:'管理部', title:'備品（同額・重複疑い）', cat:'消耗品', amount:29800, created:'2026-04-20T10:05', decided:'2026-04-20T16:40', by:'N部長', receipt:true},
+  {id:'EXP-0420-026', who:'J斎', dept:'管理部', title:'備品（同額・重複疑い）', cat:'消耗品', amount:29800, created:'2026-04-21T10:20', decided:'2026-04-21T16:55', by:'N部長', receipt:true},
+  {id:'EXP-0422-004', who:'K前', dept:'営業一部', title:'接待（深夜起票）', cat:'接待費', amount:56000, created:'2026-04-23T02:41', decided:'2026-04-23T12:10', by:'M本部長', receipt:true},
+  {id:'EXP-0424-016', who:'L加', dept:'開発部', title:'勉強会参加費', cat:'その他', amount:8000, created:'2026-04-24T15:44', decided:'2026-04-25T10:30', by:'N部長', receipt:true},
+  {id:'EXP-0427-001', who:'M本部長', dept:'営業本部', title:'自己承認（本部長の接待）', cat:'接待費', amount:120000, created:'2026-04-27T18:05', decided:'2026-04-27T18:20', by:'M本部長', receipt:true},
+];
+
+const THRESHOLD = 100000;           // 稟議/承認の閾値（円）＝分割回避の検知基準
+const INSTANT_MIN = 5;              // 即時承認の分閾値
+const catP90 = {};                  // 科目別P90（高額外れ値の基準）
+(function(){
+  const g={}; APPS.forEach(a=>{ (g[a.cat]=g[a.cat]||[]).push(a.amount); });
+  for(const c in g){ const s=g[c].slice().sort((x,y)=>x-y); catP90[c]=s[Math.floor(s.length*0.9)]||s[s.length-1]; }
+})();
+const mins = (a,b)=> (new Date(b)-new Date(a))/60000;
+const yen = n=> '¥'+Number(n).toLocaleString('en-US');
+const hh = iso=> Number(iso.slice(11,13));
+
+// ===== 検知：決定論ルール → 根拠 + 4軸スコア =====
+function detect(a){
+  const flags=[]; let deviation=0, impact=0, urgency=0, repeat=0;
+  // 自己承認（職務分掌違反）
+  if(a.by===a.who){ flags.push({t:'自己承認', d:'申請者＝承認者（職務分掌違反）'}); deviation+=40; }
+  // 即時承認（ノールック）
+  const dt = a.decided? mins(a.created,a.decided): null;
+  if(dt!=null && dt<INSTANT_MIN){ flags.push({t:'即時承認', d:`起票から${Math.round(dt)}分で承認（ノールック疑い）`}); deviation+=22; }
+  // 深夜起票
+  const h=hh(a.created); if(h>=22||h<5){ flags.push({t:'深夜起票', d:`起票 ${a.created.slice(11,16)}（時間外）`}); deviation+=10; urgency+=8; }
+  // 高額外れ値（科目別P90超）
+  if(a.amount > (catP90[a.cat]||Infinity)*1.5 && a.amount>=100000){ flags.push({t:'高額外れ値', d:`${a.cat}の分布上位を大きく超過（${yen(a.amount)}）`}); deviation+=16; }
+  impact = Math.min(30, a.amount/20000); // 影響度：金額
+  // 領収書なし × 高額
+  if(!a.receipt && a.amount>=30000){ flags.push({t:'領収書なし', d:`高額なのに領収書添付なし（${yen(a.amount)}）`}); deviation+=14; }
+  // 切迫性：直近（4月後半ほど高）
+  const day=Number(a.created.slice(8,10)); urgency += Math.max(0, day-15);
+  return {a, flags, axes:{deviation:Math.round(deviation), impact:Math.round(impact), urgency:Math.round(urgency), repeat}, dt};
+}
+// クロス申請ルール（分割回避・重複）＝申請者×科目で集計
+function crossRules(results){
+  const byWho={}; results.forEach(r=>{ (byWho[r.a.who]=byWho[r.a.who]||[]).push(r); });
+  for(const who in byWho){
+    const rs=byWho[who];
+    // 分割申請（閾値の80〜100%を短期間に複数）
+    const near = rs.filter(r=> r.a.amount>=THRESHOLD*0.8 && r.a.amount<THRESHOLD);
+    if(near.length>=2){ near.forEach(r=>{ r.flags.push({t:'分割申請', d:`閾値${yen(THRESHOLD)}直下の申請が同一者で複数（回避疑い）`}); r.axes.deviation+=24; r.axes.repeat+=15; }); }
+    // 重複（同額・近接日）
+    for(let i=0;i<rs.length;i++)for(let j=i+1;j<rs.length;j++){
+      if(rs[i].a.amount===rs[j].a.amount && Math.abs(new Date(rs[i].a.created)-new Date(rs[j].a.created))<=3*864e5){
+        [rs[i],rs[j]].forEach(r=>{ if(!r.flags.some(f=>f.t==='重複疑い')){ r.flags.push({t:'重複疑い', d:`同一者・同額(${yen(rs[i].a.amount)})が近接日に複数`}); r.axes.repeat+=12; } });
+      }
+    }
+  }
+}
+function score(r){ const x=r.axes; const s=x.deviation*1.0 + x.impact*0.7 + x.urgency*0.5 + x.repeat*0.9; return Math.min(100, Math.round(s)); }
+function rank(s){ return s>=55?'hi': s>=32?'mid': s>=15?'low':'clean'; }
+const RKLABEL={hi:'高リスク', mid:'要確認', low:'留意', clean:'—'};
+
+const results = APPS.map(detect);
+crossRules(results);
+results.forEach(r=> r.score=score(r));
+
+// ===== 描画 =====
+const flagged = results.filter(r=> rank(r.score)!=='clean').sort((a,b)=> b.score-a.score);
+const hiN = results.filter(r=> rank(r.score)==='hi').length;
+const midN = results.filter(r=> rank(r.score)==='mid').length;
+const atRisk = flagged.reduce((s,r)=> s+r.a.amount, 0);
+
+document.getElementById('cards').innerHTML =
+  `<div class="card"><b>${APPS.length}</b><span>対象申請（サンプル）</span></div>`+
+  `<div class="card"><b class="hi">${flagged.length}</b><span>要確認 事案</span></div>`+
+  `<div class="card"><b class="hi">${hiN}</b><span>高リスク</span></div>`+
+  `<div class="card"><b class="mid">${midN}</b><span>要確認（中）</span></div>`+
+  `<div class="card"><b>${yen(atRisk)}</b><span>要確認事案の金額計</span></div>`;
+
+document.getElementById('events').innerHTML = flagged.map(r=>{
+  const rk=rank(r.score); const a=r.a;
+  return `<div class="ev rank-${rk}">
+    <div class="top">
+      <span class="score ${rk}">${r.score}</span>
+      <span class="rk ${rk}">${RKLABEL[rk]}</span>
+      <span class="ttl">${a.title}</span>
+      <span class="rk" style="background:#eef;color:#2E5FB0">${a.cat}</span>
+    </div>
+    <div class="meta">${a.id} ／ ${a.who}（${a.dept}）／ ${yen(a.amount)} ／ 起票 ${a.created.replace('T',' ')} ／ 承認 ${a.decided?a.decided.replace('T',' '):'—'}（${a.by}）</div>
+    <div class="flags">${r.flags.map(f=>`<span class="flag"><b>${f.t}</b>：${f.d}</span>`).join('')}</div>
+    <div class="axes">
+      <span class="a">逸脱度 <b>${r.axes.deviation}</b></span>
+      <span class="a">影響度(金額) <b>${r.axes.impact}</b></span>
+      <span class="a">切迫性 <b>${r.axes.urgency}</b></span>
+      <span class="a">反復性 <b>${r.axes.repeat}</b></span>
+    </div>
+    <div class="rec">👤 <b>推奨</b>：${rk==='hi'?'監査・管理部門が優先点検（証憑・承認経路の確認）':'担当部門で内容確認'}。判断は人が行う（道真は候補提示のみ）。</div>
+  </div>`;
+}).join('');
+
+document.getElementById('allbody').innerHTML = results.slice().sort((a,b)=> b.score-a.score).map(r=>{
+  const a=r.a; const rk=rank(r.score);
+  return `<tr class="${rk==='clean'?'clean':''}"><td>${a.id}</td><td>${a.who}</td><td>${a.dept}</td><td>${a.title}</td><td>${a.cat}</td><td style="font-family:var(--mono)">${yen(a.amount)}</td><td style="font-family:var(--mono)">${a.created.slice(5,16).replace('T',' ')}</td><td>${a.by}</td><td style="font-family:var(--mono);font-weight:700">${r.score}</td></tr>`;
+}).join('');
+
+document.getElementById('foot').innerHTML =
+  '検知ルール（決定論）：自己承認／即時承認（'+INSTANT_MIN+'分未満）／深夜起票／高額外れ値（科目別P90×1.5超）／領収書なし×高額／分割申請（閾値'+yen(THRESHOLD)+'の80–100%を複数）／重複疑い（同額・近接日）。'+
+  'スコア＝逸脱度×1.0＋影響度×0.7＋切迫性×0.5＋反復性×0.9（上限100）。'+
+  '<br>Phase2＝ホーリーNeonの匿名エクスポートに差し替え／守りの知性の「不正・横領阻止額」へ接続。全数値はサンプル。';
+</script>
+</body></html>
