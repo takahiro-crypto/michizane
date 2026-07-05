@@ -141,6 +141,10 @@ h1{font-size:24px;font-weight:800;letter-spacing:-.02em;margin-top:4px}
       <div style="font-weight:700;font-size:13.5px">🔗 循環取引・粉飾 クロス検知 PoC</div>
       <div style="font-size:11.5px;color:var(--mute);margin-top:5px;line-height:1.5">OBIC仕訳×取引グラフの閉路検知＋相関（e-Realty前倒し領域・サンプル）</div>
     </a>
+    <a href="/poc/ghost/" target="_blank" style="background:var(--card);border:1px solid var(--michi);border-radius:12px;padding:14px;text-decoration:none;color:var(--text);display:block">
+      <div style="font-weight:700;font-size:13.5px">🕵️ 空出張 検知 PoC</div>
+      <div style="font-size:11.5px;color:var(--mute);margin-top:5px;line-height:1.5">出張申請×カレンダー×活動ログのメタ突合で「行った形跡がない出張」を検知（本文不使用・サンプル）</div>
+    </a>
     <a href="docs/view.html?f=michizane-design-v2.1.md" target="_blank" style="background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;text-decoration:none;color:var(--text);display:block">
       <div style="font-weight:700;font-size:13.5px">🏛️ 道真 全体設計 v2.1（確定版）</div>
       <div style="font-size:11.5px;color:var(--mute);margin-top:5px;line-height:1.5">Opus起案→Fable 5改訂→Opus確定。5層アーキ・名寄せ・検知式・誤検知運用・ロードマップ（全14章）</div>
@@ -185,6 +189,7 @@ const EVENTS = [
   {date:'2026-07-05', sys:'michi',  status:'live', title:'事業部を実名化（IRI/ソーシャルリスク/コーポレート）', desc:'ダミー事業部を実名へ。GitHub連携で自動デプロイ。'},
   {date:'2026-07-05', sys:'michi',  status:'live', title:'経費不正 検知PoC（/poc）', desc:'ホーリー申請データを決定論ルールで検知→スコア＋根拠。設計v2.1のDetector実装（サンプル）。'},
   {date:'2026-07-05', sys:'michi',  status:'live', title:'循環取引・粉飾 クロス検知PoC（/poc/cross）', desc:'取引グラフの閉路検知＋仕訳ルール＋クロス相関。SVGで閉路可視化（サンプル）。'},
+  {date:'2026-07-05', sys:'michi',  status:'live', title:'空出張 検知PoC（/poc/ghost）', desc:'出張申請×カレンダー×活動ログのメタ突合で「行った形跡がない出張」を検知。本文不使用。カレンダー/メール/チャットのメタを供給層に追加。'},
   {date:'2026-07-05', sys:'michi',  status:'doc', title:'道真 全体設計 v2.1（Opus×Fable 5）', desc:'Opus起案→Fable 5改訂→Opus確定。5層アーキ・名寄せ・検知式・誤検知運用。会計データはローカル/オンプレ実行の配置原則。/status資料に掲載。'},
   {date:'2026-07-05', sys:'michi',  status:'doc', title:'道真×ホーリー 実データ連携（Phase2着手）', desc:'仮名化エクスポート指示書＋ローカル検知スクリプト（会計データはローカル完結）。e-Realtyから第1弾受領→経費不正2件検知。会計仕訳はOBIC7から追加エクスポートを依頼中。'},
   // 資料・設計（本番アプリではないが進捗）
