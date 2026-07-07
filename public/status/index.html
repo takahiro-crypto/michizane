@@ -159,11 +159,19 @@ h1{font-size:24px;font-weight:800;letter-spacing:-.02em;margin-top:4px}
     </a>
     <a href="docs/view.html?f=michizane-design-v2.1.md" target="_blank" style="background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;text-decoration:none;color:var(--text);display:block">
       <div style="font-weight:700;font-size:13.5px">🏛️ 道真 全体設計 v2.1（確定版）</div>
-      <div style="font-size:11.5px;color:var(--mute);margin-top:5px;line-height:1.5">Opus起案→Fable 5改訂→Opus確定。5層アーキ・名寄せ・検知式・誤検知運用・ロードマップ（全14章）</div>
+      <div style="font-size:11.5px;color:var(--mute);margin-top:5px;line-height:1.5">Opus起案→Fable 5改訂→Opus確定。5層アーキ・名寄せ・検知式・誤検知運用・ロードマップ（全15章／§15＝IRI戦略整合を追記）</div>
     </a>
     <a href="docs/view.html?f=michizane-design-opus-v1.md" target="_blank" style="background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;text-decoration:none;color:var(--text);display:block">
       <div style="font-weight:700;font-size:13.5px">📐 道真 全体設計 v1.0（Opus起案）</div>
       <div style="font-size:11.5px;color:var(--mute);margin-top:5px;line-height:1.5">改訂前の起案版（比較用・全10章）</div>
+    </a>
+    <a href="docs/iri-framework-map.html" target="_blank" style="background:var(--card);border:1px solid var(--michi);border-radius:12px;padding:14px;text-decoration:none;color:var(--text);display:block">
+      <div style="font-weight:700;font-size:13.5px">🎯 道真 × IRI「AI時代のリスク戦略」対応（1枚）</div>
+      <div style="font-size:11.5px;color:var(--mute);margin-top:5px;line-height:1.5">道真PoC＝IRIの運用層M11/M12を実データで実証。脅威4分類×規制フェーズ対応表＋"Cだけでも価値"＋ギャップ診断フック</div>
+    </a>
+    <a href="docs/view.html?f=iri-framework-mapping.md" target="_blank" style="background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;text-decoration:none;color:var(--text);display:block">
+      <div style="font-weight:700;font-size:13.5px">📎 道真PoC × IRIフレーム対応（言い換え・燃料化）</div>
+      <div style="font-size:11.5px;color:var(--mute);margin-top:5px;line-height:1.5">各PoCを標準準拠ギャップ診断の"問い"に変換。A/B/Cログ整合・Insider Threat Labへの還流（設計メモ）</div>
     </a>
   </div>
 </div>
@@ -204,6 +212,7 @@ const EVENTS = [
   {date:'2026-07-05', sys:'michi',  status:'live', title:'空出張 検知PoC（/poc/ghost）', desc:'出張申請×カレンダー×活動ログのメタ突合で「行った形跡がない出張」を検知。本文不使用。カレンダー/メール/チャットのメタを供給層に追加。'},
   {date:'2026-07-05', sys:'michi',  status:'doc', title:'道真 全体設計 v2.1（Opus×Fable 5）', desc:'Opus起案→Fable 5改訂→Opus確定。5層アーキ・名寄せ・検知式・誤検知運用。会計データはローカル/オンプレ実行の配置原則。/status資料に掲載。'},
   {date:'2026-07-05', sys:'michi',  status:'doc', title:'道真×ホーリー 実データ連携（Phase2着手）', desc:'仮名化エクスポート指示書＋ローカル検知スクリプト（会計データはローカル完結）。e-Realtyから第1弾受領→経費不正2件検知。会計仕訳はOBIC7から追加エクスポートを依頼中。'},
+  {date:'2026-07-08', sys:'michi',  status:'doc', title:'道真 × IRI「AI時代のリスク戦略」フレーム対応', desc:'IRI企画書(2026-07-07)と整合。道真PoC＝運用層M11/M12の実データ実証と位置づけ。脅威4分類×規制フェーズ対応表・"Cだけでも価値"・ギャップ診断フックの1枚もの＋設計書§15を追記。'},
   // 資料・設計（本番アプリではないが進捗）
   {date:'2026-07-04', sys:'auto',   status:'doc',  title:'提案書 v1.0（無駄なSaaS削減×Claude Code内製化）', desc:'二重の価値・SaaS仕分け・運用モデル(夜間SKYDIV×朝ホーリー)＋AIガバナンス。PDF/バージョン管理。'},
   {date:'2026-07-04', sys:'michi',  status:'doc',  title:'道真×ホーリー PoC設計書 v0.2', desc:'経費不正/OSINT/粉飾/循環取引/ハラスメントの検知カタログと段取り。'},

@@ -1,0 +1,93 @@
+<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{margin:0;background:#e9edf2;overflow-x:hidden}
+.stage{width:100%;overflow:hidden}
+.slide{width:1980px;height:1371px;margin:0 auto;background:#fff;transform-origin:top left;transform:scale(var(--s,1));font-family:'Yu Gothic UI','Meiryo','Hiragino Sans',sans-serif;color:#1c2b4a;overflow:hidden}
+.wrap{padding:52px 68px 34px;height:100%;display:flex;flex-direction:column}
+.bar{height:10px;width:150px;background:linear-gradient(90deg,#2E6CB0,#6B4E9E);border-radius:5px;margin-bottom:20px}
+.kicker{font-size:24px;color:#2E6CB0;font-weight:800;letter-spacing:.03em}
+h1{font-size:50px;font-weight:800;margin-top:9px;line-height:1.12}
+h1 b{color:#2E6CB0}
+.tag{font-size:24px;color:#61708c;margin-top:13px}
+.cols{display:flex;gap:40px;flex:1;margin:34px 0 24px}
+.left{flex:1.42;display:flex;flex-direction:column}
+.right{flex:1;display:flex;flex-direction:column;gap:24px}
+.sec{font-size:26px;font-weight:800;margin-bottom:16px}
+table{width:100%;border-collapse:collapse;flex:1}
+th{font-size:19px;color:#fff;background:#3a4a68;padding:14px 14px;text-align:left;font-weight:700}
+th:first-child{border-radius:12px 0 0 0}th:last-child{border-radius:0 12px 0 0}
+td{font-size:20px;padding:16px 14px;border-bottom:1px solid #e4e8ef;vertical-align:middle}
+tr:last-child td{border-bottom:none}
+.poc{font-weight:800;font-size:21px}
+.hot{background:#fbf3df}
+.chip{display:inline-block;font-size:16px;font-weight:800;border-radius:20px;padding:3px 12px;color:#fff}
+.c-leak{background:#c2610c}.c-ai{background:#6B4E9E}.c-h{background:#5f7397}
+.star{color:#c2610c;font-weight:800}
+.layer{font-family:'Consolas',monospace;font-weight:800;color:#0e7c71;font-size:20px}
+.ph{font-size:19px;color:#41506b}
+.card{border-radius:20px;padding:30px 34px;flex:1;display:flex;flex-direction:column;justify-content:center}
+.card.proof{background:#eef4fb;border-left:12px solid #2E6CB0}
+.card.hook{background:#f4f0fa;border-left:12px solid #6B4E9E}
+.ct{font-size:27px;font-weight:800;margin-bottom:16px}
+.card.proof .ct{color:#2E6CB0}.card.hook .ct{color:#6B4E9E}
+.abc{display:flex;gap:12px;margin:8px 0 18px}
+.ab{flex:1;text-align:center;border-radius:12px;padding:14px 8px;font-size:18px;font-weight:700}
+.ab.off{background:#e6ebf3;color:#9aa7bd}.ab.part{background:#cfe0d9;color:#0e7c71}
+.ab.on{background:#2E6CB0;color:#fff}
+.ab small{display:block;font-weight:500;font-size:14px;margin-top:5px;opacity:.85}
+.ptxt{font-size:21px;line-height:1.55;color:#31415e}.ptxt b{color:#2E6CB0}
+.q{font-size:20px;line-height:1.5;color:#41506b;padding-left:26px;position:relative;margin:11px 0}
+.q:before{content:"Q";position:absolute;left:0;top:0;color:#6B4E9E;font-weight:800}
+.q b{color:#1c2b4a}
+.band{background:#1c2b4a;color:#fff;border-radius:16px;padding:26px 36px;font-size:26px;line-height:1.5}
+.band b{color:#7fb0e6}
+.foot{font-size:18px;color:#8593a8;border-top:1px solid #e4e8ef;padding-top:16px;margin-top:20px}
+</style></head><body>
+<div class="stage"><div class="slide"><div class="wrap">
+<div>
+<div class="bar"></div>
+<div class="kicker">道真（Michizane） × IRI「AI時代のリスク戦略」</div>
+<h1>道真PoC ＝ IRIの <b>運用層 M11/M12</b> を"実データで実証"するピース</h1>
+<div class="tag">「操作された側」のログで、人＋AIエージェントの不正を検知・追跡・原因究明する ― PoC成果を世界標準フレームに翻訳</div>
+</div>
+
+<div class="cols">
+  <div class="left">
+    <div class="sec">道真PoC検知 × 脅威分類 × 対策層 × 規制フェーズ</div>
+    <table>
+      <tr><th>道真PoC検知</th><th>脅威4分類</th><th>NISC対策層</th><th>刺さる規制フェーズ</th></tr>
+      <tr><td class="poc">経費不正</td><td><span class="chip c-leak">①漏れる</span></td><td class="layer">M11・M12</td><td class="ph">③善管注意義務（J-SOX）</td></tr>
+      <tr><td class="poc">循環取引・粉飾</td><td><span class="chip c-leak">①漏れる</span> 共謀</td><td class="layer">M11・M12</td><td class="ph">③善管 ＋ ②制度（金商法）</td></tr>
+      <tr><td class="poc">空出張</td><td><span class="chip c-leak">①漏れる</span></td><td class="layer">M11・M12</td><td class="ph">③善管（内部統制の実効性）</td></tr>
+      <tr class="hot"><td class="poc">内部不正・持ち出し<br><small style="color:#8a5a00">（AIで加速）</small></td><td><span class="chip c-leak">①漏れる</span> <span class="star">◎主戦場</span></td><td class="layer">M11・M12</td><td class="ph">②制度 〜 ③善管</td></tr>
+      <tr><td class="poc">AIエージェント不正<br><small style="color:#8593a8">（過剰代理権・逸脱操作）</small></td><td><span class="chip c-ai">③AI暴走</span></td><td class="layer">M11・M12</td><td class="ph">②制度（AI Act）〜 ③善管</td></tr>
+      <tr><td class="poc">ハラスメント<br><small style="color:#8593a8">（chat/mail/カレンダー）</small></td><td><span class="chip c-h">人のふるまい</span></td><td class="layer">M11・M9</td><td class="ph">労務（防止法）＋ 善管</td></tr>
+    </table>
+  </div>
+  <div class="right">
+    <div class="card proof">
+      <div class="ct">"Cだけでも価値" を実証済み</div>
+      <div class="abc">
+        <div class="ab off">A ゲートウェイ<small>未使用</small></div>
+        <div class="ab part">B ツール監査<small>OBIC・WF</small></div>
+        <div class="ab on">C 操作された側<small>主軸✓</small></div>
+      </div>
+      <div class="ptxt">道真PoCは<b>ゲートウェイ(A)なし</b>で、C層（端末・会計・操作ログ＝普遍層）＋一部B層だけで<b>財務不正を根拠つきで検知</b>。<br>中堅市場（AI棚卸しすら無いのが過半数）への最強の実装論拠。</div>
+    </div>
+    <div class="card hook">
+      <div class="ct">ギャップ診断のフック（言い換え）</div>
+      <div class="q"><b>承認が通った経費</b>の架空・水増しを、"操作された側のログ"で事後検知できていますか？</div>
+      <div class="q"><b>取引先をまたいだ共謀</b>を、単票でなく取引網として捉えられますか？</div>
+      <div class="q"><b>AIエージェント＝非人間</b>の操作を、人と同じ監視対象に載せていますか？</div>
+    </div>
+  </div>
+</div>
+
+<div class="band">道真PoCの成果（4軸スコア・突合ロジック・検知シナリオ）は、そのまま <b>無料ギャップ診断・標準準拠レポートの"燃料"</b> になる。― 「効率化には、相応のセキュリティが要る。世界標準で、できていますか？」</div>
+<div class="foot">依拠フレーム：OWASP LLM Top10／NIST AI RMF（MEASURE・MANAGE）／NISC「Engaging with AI」6脅威12対策／AISI。　道真＝ELTES IRIの検知ノウハウの製品化母体（社内ドッグフーディングが営業資産）。</div>
+</div></div></div>
+<script>
+function fit(){var s=Math.min(1,window.innerWidth/1980);var sl=document.querySelector('.slide');sl.style.setProperty('--s',s);document.querySelector('.stage').style.height=(1371*s)+'px';}
+fit();window.addEventListener('resize',fit);
+</script>
+</body></html>
