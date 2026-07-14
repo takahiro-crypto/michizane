@@ -179,6 +179,20 @@ h1{font-size:24px;font-weight:800;letter-spacing:-.02em;margin-top:4px}
 <div class="filters" id="filters"></div>
 <div class="tl" id="timeline"></div>
 
+<!-- 管理者: ロールバック（前の版に戻す） -->
+<div id="rb" style="margin:30px 0 0;border-top:1px solid var(--line);padding-top:16px">
+  <button id="rb-toggle" style="background:var(--panel);border:1px solid var(--line);color:var(--mute);border-radius:8px;padding:7px 13px;font-size:12px;cursor:pointer">▸ 管理者メニュー（ロールバック）</button>
+  <div id="rb-body" style="display:none;margin-top:14px">
+    <div style="font-size:12px;color:var(--mute);margin-bottom:12px;line-height:1.7">
+      管理者だけが、対象システムを過去の本番デプロイに戻せます。操作は記録されます。<br>
+      ※ 戻るのは<b>コード・画面</b>だけで、データベースの中身は戻りません。
+    </div>
+    <div id="rb-auth"><div id="rb-gsi"></div></div>
+    <div id="rb-msg" style="font-size:12px;margin-top:10px;color:var(--mute)"></div>
+    <div id="rb-list" style="margin-top:12px;display:grid;gap:8px"></div>
+  </div>
+</div>
+
 <div class="foot" id="foot"></div>
 </div>
 
@@ -275,5 +289,86 @@ function renderFoot(){
     '「本番」＝稼働中の機能、「資料・設計」＝提案書/設計書等の進捗。';
 }
 renderStats(); renderSys(); renderFilters(); renderTimeline(); renderFoot();
+</script>
+
+<!-- 管理者ロールバック（サーバー /api/rollback が本当の権限判定を行う。ここは操作UIのみ） -->
+<script>
+(function(){
+  var CLIENT_ID='224281821934-370bp8phff1bi06045qp8037cr9b8h4m.apps.googleusercontent.com';
+  var TARGET='tatsuya', TARGET_LABEL='タツヤ (eltes-holly)';
+  var token=null, opened=false;
+  var $=function(id){return document.getElementById(id);};
+  var toggle=$('rb-toggle'), body=$('rb-body'), auth=$('rb-auth'), msg=$('rb-msg'), listEl=$('rb-list');
+  function setMsg(t,color){ msg.style.color=color||'var(--mute)'; msg.innerHTML=t||''; }
+  function esc(s){ return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
+  function fmtDate(ms){ if(!ms) return '—'; try{ return new Date(ms).toLocaleString('ja-JP',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}); }catch(e){ return '—'; } }
+
+  toggle.onclick=function(){
+    opened=!opened; body.style.display=opened?'block':'none';
+    toggle.textContent=(opened?'▾':'▸')+' 管理者メニュー（ロールバック）';
+    if(opened && !token) startAuth();
+  };
+
+  function startAuth(){
+    auth.style.display='';
+    (function ready(){
+      if(!window.google||!google.accounts||!google.accounts.id){ setTimeout(ready,250); return; }
+      try{
+        google.accounts.id.initialize({ client_id: CLIENT_ID, callback: function(res){ token=res.credential; auth.style.display='none'; loadList(); } });
+        google.accounts.id.renderButton($('rb-gsi'), { theme:'filled_blue', size:'medium', text:'signin_with', locale:'ja' });
+        setMsg('ロールバック一覧を表示するには、管理者アカウントで認証してください。');
+      }catch(e){ setMsg('認証の読み込みに失敗しました。ページを再読み込みしてください。','var(--auto)'); }
+    })();
+  }
+
+  function api(qs, opts){
+    opts=opts||{}; opts.headers=Object.assign({'Authorization':'Bearer '+token}, opts.headers||{});
+    return fetch('/api/rollback'+qs, opts).then(function(r){
+      return r.json().catch(function(){return {};}).then(function(j){
+        if(!r.ok){ var e=new Error(j.error||('エラー '+r.status)); e.status=r.status; throw e; }
+        return j;
+      });
+    });
+  }
+
+  function loadList(){
+    setMsg('読み込み中…');
+    api('?action=deployments&target='+encodeURIComponent(TARGET)).then(function(j){
+      setMsg('対象: <b>'+esc((j.target&&j.target.label)||TARGET_LABEL)+'</b>　（認証: '+esc(j.admin||'')+'）');
+      renderList(j.deployments||[]);
+    }).catch(function(e){
+      listEl.innerHTML='';
+      if(e.status===401){ token=null; setMsg('認証の有効期限が切れました。もう一度認証してください。','var(--auto)'); startAuth(); return; }
+      setMsg((e.status===403?'権限がありません：':'取得に失敗：')+esc(e.message),'var(--auto)');
+    });
+  }
+
+  function renderList(items){
+    if(!items.length){ listEl.innerHTML='<div style="font-size:12px;color:var(--mute)">デプロイ履歴がありません。</div>'; return; }
+    listEl.innerHTML=items.map(function(d){
+      var cur=d.current;
+      var m=(d.message||'').split('\n')[0].slice(0,80);
+      var right=cur
+        ? '<span style="font-size:11px;color:var(--good);border:1px solid var(--good);border-radius:6px;padding:4px 9px;white-space:nowrap">● 現在の本番</span>'
+        : '<button data-uid="'+esc(d.uid)+'" class="rb-go" style="background:var(--tatsuya);border:none;color:#fff;border-radius:6px;padding:6px 12px;font-size:12px;cursor:pointer;white-space:nowrap">この版に戻す</button>';
+      return '<div style="display:flex;align-items:center;gap:10px;justify-content:space-between;background:var(--card);border:1px solid '+(cur?'var(--good)':'var(--line)')+';border-radius:10px;padding:10px 12px">'
+        +'<div style="min-width:0">'
+        +'<div style="font-family:var(--mono);font-size:11px;color:var(--mute)">'+fmtDate(d.created)+'　'+esc(d.state||'')+(d.sha?('　'+esc(String(d.sha).slice(0,7))):'')+'</div>'
+        +'<div style="font-size:12.5px;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(m?esc(m):'<span style="color:var(--mute)">(コミットメッセージなし)</span>')+'</div>'
+        +'</div>'+right+'</div>';
+    }).join('');
+    Array.prototype.forEach.call(listEl.querySelectorAll('.rb-go'), function(b){
+      b.onclick=function(){ doRollback(b.getAttribute('data-uid')); };
+    });
+  }
+
+  function doRollback(uid){
+    if(!confirm('「'+TARGET_LABEL+'」を選んだ版に戻します。よろしいですか？\n（本番のコード・画面が即時に切り替わります。データベースは戻りません）')) return;
+    setMsg('ロールバック実行中…');
+    api('', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ action:'rollback', target:TARGET, deploymentId:uid }) })
+      .then(function(){ setMsg('✅ ロールバックしました（反映まで数十秒かかる場合があります）。','var(--good)'); setTimeout(loadList,3000); })
+      .catch(function(e){ setMsg('失敗：'+esc(e.message),'var(--auto)'); });
+  }
+})();
 </script>
 </body></html>
