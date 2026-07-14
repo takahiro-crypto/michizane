@@ -188,6 +188,10 @@ h1{font-size:24px;font-weight:800;letter-spacing:-.02em;margin-top:4px}
       ※ 戻るのは<b>コード・画面</b>だけで、データベースの中身は戻りません。
     </div>
     <div id="rb-auth"><div id="rb-gsi"></div></div>
+    <div id="rb-target-wrap" style="display:none;margin-top:10px">
+      <label style="font-size:12px;color:var(--mute);margin-right:8px">対象システム</label>
+      <select id="rb-target" style="background:var(--panel);border:1px solid var(--line);color:var(--text);border-radius:6px;padding:6px 10px;font-size:12px"></select>
+    </div>
     <div id="rb-msg" style="font-size:12px;margin-top:10px;color:var(--mute)"></div>
     <div id="rb-list" style="margin-top:12px;display:grid;gap:8px"></div>
   </div>
@@ -295,10 +299,12 @@ renderStats(); renderSys(); renderFilters(); renderTimeline(); renderFoot();
 <script>
 (function(){
   var CLIENT_ID='224281821934-370bp8phff1bi06045qp8037cr9b8h4m.apps.googleusercontent.com';
-  var TARGET='tatsuya', TARGET_LABEL='タツヤ (eltes-holly)';
+  var TARGET=null, TARGET_LABEL='';
   var token=null, opened=false;
   var $=function(id){return document.getElementById(id);};
   var toggle=$('rb-toggle'), body=$('rb-body'), auth=$('rb-auth'), msg=$('rb-msg'), listEl=$('rb-list');
+  var targetWrap=$('rb-target-wrap'), targetSel=$('rb-target');
+  targetSel.onchange=function(){ TARGET=targetSel.value; TARGET_LABEL=targetSel.options[targetSel.selectedIndex].text; loadList(); };
   function setMsg(t,color){ msg.style.color=color||'var(--mute)'; msg.innerHTML=t||''; }
   function esc(s){ return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
   function fmtDate(ms){ if(!ms) return '—'; try{ return new Date(ms).toLocaleString('ja-JP',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}); }catch(e){ return '—'; } }
@@ -314,7 +320,7 @@ renderStats(); renderSys(); renderFilters(); renderTimeline(); renderFoot();
     (function ready(){
       if(!window.google||!google.accounts||!google.accounts.id){ setTimeout(ready,250); return; }
       try{
-        google.accounts.id.initialize({ client_id: CLIENT_ID, callback: function(res){ token=res.credential; auth.style.display='none'; loadList(); } });
+        google.accounts.id.initialize({ client_id: CLIENT_ID, callback: function(res){ token=res.credential; auth.style.display='none'; loadTargets(); } });
         google.accounts.id.renderButton($('rb-gsi'), { theme:'filled_blue', size:'medium', text:'signin_with', locale:'ja' });
         setMsg('ロールバック一覧を表示するには、管理者アカウントで認証してください。');
       }catch(e){ setMsg('認証の読み込みに失敗しました。ページを再読み込みしてください。','var(--auto)'); }
@@ -331,7 +337,23 @@ renderStats(); renderSys(); renderFilters(); renderTimeline(); renderFoot();
     });
   }
 
+  function loadTargets(){
+    setMsg('対象を取得中…');
+    api('?action=targets').then(function(j){
+      var ts=j.targets||[];
+      if(!ts.length){ setMsg('ロールバック対象が未登録です。','var(--auto)'); return; }
+      targetSel.innerHTML=ts.map(function(t){ return '<option value="'+esc(t.key)+'">'+esc(t.label||t.key)+'</option>'; }).join('');
+      targetWrap.style.display='';
+      TARGET=ts[0].key; TARGET_LABEL=ts[0].label||ts[0].key;
+      loadList();
+    }).catch(function(e){
+      if(e.status===401){ token=null; setMsg('認証の有効期限が切れました。もう一度認証してください。','var(--auto)'); startAuth(); return; }
+      setMsg((e.status===403?'権限がありません：':'対象取得に失敗：')+esc(e.message),'var(--auto)');
+    });
+  }
+
   function loadList(){
+    if(!TARGET){ return; }
     setMsg('読み込み中…');
     api('?action=deployments&target='+encodeURIComponent(TARGET)).then(function(j){
       setMsg('対象: <b>'+esc((j.target&&j.target.label)||TARGET_LABEL)+'</b>　（認証: '+esc(j.admin||'')+'）');

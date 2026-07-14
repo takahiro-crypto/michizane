@@ -20,10 +20,29 @@ const CLIENT_ID = process.env.ROLLBACK_GIS_CLIENT_ID
   || '224281821934-370bp8phff1bi06045qp8037cr9b8h4m.apps.googleusercontent.com';
 const ALLOWED_DOMAIN = 'eltes.co.jp';
 
-// ロールバック可能な対象プロジェクトの許可リスト（クライアントからは name のみ受け取る）。
-const TARGETS = {
+// ロールバック可能な対象の「静的フォールバック」。タツヤは常に対象（=制御面の土台）。
+const STATIC_TARGETS = {
   tatsuya: { projectId: 'prj_FZu2vS84WW5IK0MEHIixAZuhcWAU', label: 'タツヤ (eltes-holly)' },
 };
+const TATSUYA_BASE = (process.env.TATSUYA_API_BASE || 'https://eltes-holly.vercel.app').replace(/\/+$/, '');
+
+// 対象一覧を組み立てる。静的フォールバック＋タツヤ台帳(dev_projects)の live プロジェクトを動的に合流。
+//   タツヤの /api/projects/rollback-targets を共有トークンで取得（不達時は静的のみで継続＝耐障害）。
+async function getTargets() {
+  const map = { ...STATIC_TARGETS };
+  const tok = (process.env.ROLLBACK_TARGETS_TOKEN || '').trim();
+  if (!tok) return map;
+  try {
+    const r = await fetch(`${TATSUYA_BASE}/api/projects/rollback-targets`, { headers: { 'x-rollback-token': tok } });
+    if (r.ok) {
+      const j = await r.json();
+      for (const t of (j.targets || [])) {
+        if (t && t.key && t.projectId) map[t.key] = { projectId: t.projectId, label: t.label || t.key };
+      }
+    }
+  } catch (e) { /* タツヤ不達時は静的フォールバックのみで継続 */ }
+  return map;
+}
 
 const ADMINS = (process.env.ROLLBACK_ADMIN_EMAILS || '')
   .split(',').map((s) => s.trim().toLowerCase()).filter(Boolean);
@@ -112,15 +131,17 @@ export default async function handler(req, res) {
     const gate = await verifyAdmin(req);
     if (gate.error) { res.status(gate.status).json({ error: gate.error }); return; }
 
+    const targets = await getTargets();
+
     if (req.method === 'GET') {
       const action = String(req.query.action || 'deployments');
       if (action === 'targets') {
-        res.status(200).json({ targets: Object.entries(TARGETS).map(([k, v]) => ({ key: k, label: v.label })) });
+        res.status(200).json({ targets: Object.entries(targets).map(([k, v]) => ({ key: k, label: v.label })) });
         return;
       }
       // action=deployments
       const tk = String(req.query.target || '');
-      const target = TARGETS[tk];
+      const target = targets[tk];
       if (!target) { res.status(400).json({ error: '対象が不正です。' }); return; }
       const { items } = await listDeployments(target.projectId);
       res.status(200).json({ target: { key: tk, label: target.label }, admin: gate.email, deployments: items });
@@ -131,7 +152,7 @@ export default async function handler(req, res) {
       const body = await readJsonBody(req);
       if (String(body.action || 'rollback') !== 'rollback') { res.status(400).json({ error: '未対応のアクションです。' }); return; }
       const tk = String(body.target || '');
-      const target = TARGETS[tk];
+      const target = targets[tk];
       if (!target) { res.status(400).json({ error: '対象が不正です。' }); return; }
       const deploymentId = String(body.deploymentId || '');
       if (!deploymentId) { res.status(400).json({ error: 'deploymentId が必要です。' }); return; }
