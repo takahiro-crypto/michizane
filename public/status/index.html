@@ -57,9 +57,9 @@ h1{font-size:24px;font-weight:800;letter-spacing:-.02em;margin-top:4px}
 <!-- @eltes.co.jp ドメイン ゲート -->
 <div id="gate">
   <div class="box">
-    <div class="eyk">ELTES · CONFIDENTIAL</div>
+    <div class="eyk">CONFIDENTIAL</div>
     <h2>社内向けページ</h2>
-    <p>このページはエルテス（<b>@eltes.co.jp</b>）のアカウント専用です。<br>Googleでサインインしてください。</p>
+    <p>このページは許可されたアカウントのみご利用いただけます。<br>Googleでサインインしてください。</p>
     <div id="gsi"></div>
     <div class="err" id="gate-err"></div>
     <button class="tmp" id="gate-tmp" style="display:none"></button>
@@ -76,14 +76,23 @@ h1{font-size:24px;font-weight:800;letter-spacing:-.02em;margin-top:4px}
   var errEl = document.getElementById('gate-err');
   var tmpEl = document.getElementById('gate-tmp');
   function pass(){ try{ sessionStorage.setItem('mz_status_ok','1'); }catch(e){} gate.style.display='none'; }
-  try{ if(sessionStorage.getItem('mz_status_ok')==='1'){ gate.style.display='none'; return; } }catch(e){}
+  // アクセスログ: 「誰が・いつ・どこに」を beacon で /api/access-log に送る（要望対応。IP/日時はサーバ側で付与）。
+  //   email は分かる時のみ送る。送信失敗や未対応環境でも閲覧は妨げない。
+  function mzlog(event,user){
+    try{
+      var b=JSON.stringify({app:'michizane',path:location.pathname,ref:document.referrer||'',event:event||'view',user:user||''});
+      if(navigator.sendBeacon){ navigator.sendBeacon('/api/access-log', new Blob([b],{type:'application/json'})); }
+      else{ fetch('/api/access-log',{method:'POST',headers:{'Content-Type':'application/json'},body:b,keepalive:true}); }
+    }catch(e){}
+  }
+  try{ if(sessionStorage.getItem('mz_status_ok')==='1'){ mzlog('view'); gate.style.display='none'; return; } }catch(e){}
   function decode(jwt){ try{ var p=jwt.split('.')[1].replace(/-/g,'+').replace(/_/g,'/'); return JSON.parse(decodeURIComponent(escape(atob(p)))); }catch(e){ return {}; } }
   window.__onCred = function(res){
     var c = decode(res.credential);
     var email = (c.email||'').toLowerCase();
     var domain = (c.hd||'').toLowerCase() || (email.split('@')[1]||'');
-    if(domain===DOMAIN){ pass(); }
-    else { errEl.innerHTML = 'このページはエルテス（@'+DOMAIN+'）のアカウント専用です。<br>いま「'+(email||'別アカウント')+'」でサインインしています。右上のGoogleアカウントをエルテスのものに切り替えて、もう一度お試しください。'; }
+    if(domain===DOMAIN){ mzlog('signin', email); pass(); }
+    else { errEl.textContent = '許可されたアカウントでサインインしてください。現在サインインしているアカウントでは、このページをご利用いただけません。'; }
   };
   (function ready(){
     if(!window.google||!google.accounts||!google.accounts.id){ setTimeout(ready,250); return; }
